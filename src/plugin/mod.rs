@@ -1,5 +1,8 @@
 use crate::internal::MATRIX_DET_TOLERANCE;
+use std::io::Read;
+use std::io::Write;
 use std::io::{Error, ErrorKind, Result};
+use std::mem::size_of;
 
 use crate::*;
 
@@ -103,11 +106,10 @@ impl CmsMAT3 {
         let a = self.as_array();
         let b = b.as_array();
 
-        let row_col = |i: usize, j: usize| {
-            a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j]
-        };
+        let row_col =
+            |i: usize, j: usize| a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
 
-        Self { 
+        Self {
             vx: CmsVEC3::new(row_col(0, 0), row_col(0, 1), row_col(0, 2)),
             vy: CmsVEC3::new(row_col(1, 0), row_col(1, 1), row_col(1, 2)),
             vz: CmsVEC3::new(row_col(2, 0), row_col(2, 1), row_col(2, 2)),
@@ -117,9 +119,9 @@ impl CmsMAT3 {
     /// Inverse of a matrix
     pub fn inverse(self) -> Option<Self> {
         let a = self;
-        let c0 =  a.vy.y * a.vz.z - a.vy.z * a.vz.y;
+        let c0 = a.vy.y * a.vz.z - a.vy.z * a.vz.y;
         let c1 = -a.vy.x * a.vz.z + a.vy.z * a.vz.x;
-        let c2 =  a.vy.x * a.vz.y - a.vy.y * a.vz.x;
+        let c2 = a.vy.x * a.vz.y - a.vy.y * a.vz.x;
 
         let det = a.vx.x * c0 + a.vx.y * c1 + a.vx.z * c2;
 
@@ -150,12 +152,15 @@ impl CmsMAT3 {
     /// Solve a system in the form Ax = b
     pub fn solve(self, x: CmsVEC3) -> Option<CmsVEC3> {
         let a_1 = self.inverse();
-        if a_1.is_none() { None }
-        else { Some(a_1.unwrap().eval(x)) }
+        if a_1.is_none() {
+            None
+        } else {
+            Some(a_1.unwrap().eval(x))
+        }
     }
 
     /// Evaluate a vector across a matrix
-    pub fn eval(self, v: CmsVEC3) ->CmsVEC3 {
+    pub fn eval(self, v: CmsVEC3) -> CmsVEC3 {
         let a = self;
         CmsVEC3::new(
             a.vx.x * v.x + a.vx.y * v.y + a.vx.z * v.z,
@@ -165,72 +170,230 @@ impl CmsMAT3 {
     }
 }
 
-pub fn read_u8(buf: &[u8]) -> Result<u8> {
-    if buf.len() >= 1 {
+pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
+    let mut buf = [0u8; size_of::<u8>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<u8>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
         Ok(buf[0])
-    } else {
+    }
+}
+
+pub fn read_u16(reader: &mut dyn Read) -> Result<u16> {
+    let mut buf = [0u8; size_of::<u16>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<u16>() {
         Err(Error::new(
             ErrorKind::UnexpectedEof,
             "Can't read from buffer. Unexpected EOF.",
         ))
+    } else {
+        Ok(u16::from_be_bytes(buf))
     }
 }
-pub fn read_u16(buf: &[u8]) -> Result<u16> {
-    if buf.len() >= 2 {
-        let mut buf2 = [0u8; 2];
-        buf2.copy_from_slice(&buf[0..2]);
-        Ok(u16::from_be_bytes(buf2))
-    } else {
+
+pub fn read_u16_array(reader: &mut dyn Read, result: &mut [u16]) -> Result<()> {
+    for i in 0..result.len() {
+        let value = read_u16(reader)?;
+        result[i] = value;
+    }
+    Ok(())
+}
+
+pub fn read_u32(reader: &mut dyn Read) -> Result<u32> {
+    let mut buf = [0u8; size_of::<u32>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<u32>() {
         Err(Error::new(
             ErrorKind::UnexpectedEof,
             "Can't read from buffer. Unexpected EOF.",
         ))
+    } else {
+        Ok(u32::from_be_bytes(buf))
     }
 }
-pub fn read_u16_array(buf: &[u8], n: usize, result: &mut [u16]) -> Result<()> {
-    if buf.len() >= 2 * n {
-        let mut buf = buf;
-        let mut buf2 = Vec::new();
-        loop {
-            if buf.len() == 0 {
-                break;
-            }
-            let mut buf3 = [0u8; 2];
-            buf3.copy_from_slice(&buf[0..2]);
-            buf = &buf[2..];
-            buf2.push(u16::from_be_bytes(buf3));
-        }
-        result.copy_from_slice(&buf2.as_slice());
+
+pub fn read_f32(reader: &mut dyn Read) -> Result<f32> {
+    let mut buf = [0u8; size_of::<f32>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<f32>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(f32::from_be_bytes(buf))
+    }
+}
+
+pub fn read_u64(reader: &mut dyn Read) -> Result<u64> {
+    let mut buf = [0u8; size_of::<u64>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<u64>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(u64::from_be_bytes(buf))
+    }
+}
+
+pub fn read_s15f16(reader: &mut dyn Read) -> Result<S15F16> {
+    let mut buf = [0u8; size_of::<S15F16>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<S15F16>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(S15F16::from_be_bytes(buf))
+    }
+}
+
+fn read_f64(reader: &mut dyn Read) -> Result<f64> {
+    let mut buf = [0u8; size_of::<f64>()];
+    let len = reader.read(&mut buf)?;
+
+    if len < size_of::<f64>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(f64::from_be_bytes(buf))
+    }
+}
+
+pub fn read_xyz(reader: &mut dyn Read) -> Result<CmsCIEXYZ> {
+    Ok(CmsCIEXYZ {
+        X: read_f64(reader)?,
+        Y: read_f64(reader)?,
+        Z: read_f64(reader)?,
+    })
+}
+
+pub fn write_u8(writer: &mut dyn Write, value: u8) -> Result<()> {
+    let buf = [value];
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<u8>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
         Ok(())
-    } else {
-        Err(Error::new(
-            ErrorKind::UnexpectedEof,
-            "Can't read from buffer. Unexpected EOF.",
-        ))
     }
 }
-pub fn read_u32(buf: &[u8]) -> Result<u32> {
-    if buf.len() >= 4 {
-        let mut buf2 = [0u8; 4];
-        buf2.copy_from_slice(&buf[0..4]);
-        Ok(u32::from_be_bytes(buf2))
-    } else {
+
+pub fn write_u16(writer: &mut dyn Write, value: u16) -> Result<()> {
+    let buf = u16::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<u16>() {
         Err(Error::new(
             ErrorKind::UnexpectedEof,
             "Can't read from buffer. Unexpected EOF.",
         ))
+    } else {
+        Ok(())
     }
 }
-pub fn read_f32(buf: &[u8]) -> Result<f32> {
-    if buf.len() >= 4 {
-        let mut buf2 = [0u8; 4];
-        buf2.copy_from_slice(&buf[0..4]);
-        Ok(f32::from_be_bytes(buf2))
-    } else {
+
+pub fn write_u16_array(writer: &mut dyn Write, value: &[u16]) -> Result<()> {
+    for i in 0..value.len() {
+        write_u16(writer, value[i])?;
+    }
+    Ok(())
+}
+
+pub fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
+    let buf = u32::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<u32>() {
         Err(Error::new(
             ErrorKind::UnexpectedEof,
             "Can't read from buffer. Unexpected EOF.",
         ))
+    } else {
+        Ok(())
+    }
+}
+
+pub fn write_f32(writer: &mut dyn Write, value: f32) -> Result<()> {
+    let buf = f32::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<f32>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+pub fn write_u64(writer: &mut dyn Write, value: u64) -> Result<()> {
+    let buf = u64::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<u64>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+pub fn write_s15f16(writer: &mut dyn Write, value: S15F16) -> Result<()> {
+    let buf = S15F16::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<S15F16>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+pub fn write_xyz(writer: &mut dyn Write, value: CmsCIEXYZ) -> Result<()> {
+    write_f64(writer, value.X)?;
+    write_f64(writer, value.Y)?;
+    write_f64(writer, value.Z)?;
+
+    Ok(())
+}
+
+pub fn write_f64(writer: &mut dyn Write, value: f64) -> Result<()> {
+    let buf = f64::to_be_bytes(value);
+    let len = writer.write(&buf)?;
+
+    if len < size_of::<f64>() {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "Can't read from buffer. Unexpected EOF.",
+        ))
+    } else {
+        Ok(())
     }
 }
 
