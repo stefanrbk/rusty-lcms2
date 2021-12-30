@@ -1,0 +1,28 @@
+use crate::CmsSignature;
+
+pub const DIGITAL_CAMERA: CmsSignature = CmsSignature::new(b"dcam");
+pub const FILM_SCANNER: CmsSignature = CmsSignature::new(b"fscn");
+pub const REFLECTIVE_SCANNER: CmsSignature = CmsSignature::new(b"rscn");
+pub const INKJET_PRINTER: CmsSignature = CmsSignature::new(b"ijet");
+pub const THERMAL_WAX_PRINTER: CmsSignature = CmsSignature::new(b"twax");
+pub const ELECTROPHOTOGRAPHIC_PRINTER: CmsSignature = CmsSignature::new(b"epho");
+pub const ELECTROSTATIC_PRINTER: CmsSignature = CmsSignature::new(b"esta");
+pub const DYE_SUBLIMATION_PRINTER: CmsSignature = CmsSignature::new(b"dsub");
+pub const PHOTOGRAPHIC_PAPER_PRINTER: CmsSignature = CmsSignature::new(b"rpho");
+pub const FILM_WRITER: CmsSignature = CmsSignature::new(b"fprn");
+pub const VIDEO_MONITOR: CmsSignature = CmsSignature::new(b"vidm");
+pub const VIDEO_CAMERA: CmsSignature = CmsSignature::new(b"vidc");
+pub const PROJECTION_TELEVISION: CmsSignature = CmsSignature::new(b"pjtv");
+pub const CRT_DISPLAY: CmsSignature = CmsSignature::new(b"CRT ");
+pub const PM_DISPLAY: CmsSignature = CmsSignature::new(b"PMD ");
+pub const AM_DISPLAY: CmsSignature = CmsSignature::new(b"AMD ");
+pub const PHOTO_CD: CmsSignature = CmsSignature::new(b"KPCD");
+pub const PHOTO_IMAGE_SETTER: CmsSignature = CmsSignature::new(b"imgs");
+pub const GRAVURE: CmsSignature = CmsSignature::new(b"grav");
+pub const OFFSET_LITHOGRAPHY: CmsSignature = CmsSignature::new(b"offs");
+pub const SILKSCREEN: CmsSignature = CmsSignature::new(b"silk");
+pub const FLEXOGRAPHY: CmsSignature = CmsSignature::new(b"flex");
+pub const MOTION_PICTURE_FILM_SCANNER: CmsSignature = CmsSignature::new(b"mpfs");
+pub const MOTION_PICTURE_FILM_RECORDER: CmsSignature = CmsSignature::new(b"mpfr");
+pub const DIGITAL_MOTION_PICTURE_CAMERA: CmsSignature = CmsSignature::new(b"dmpc");
+pub const DIGITAL_CINEMA_PROJECTOR: CmsSignature = CmsSignature::new(b"dcpj");
