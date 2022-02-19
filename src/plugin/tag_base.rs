@@ -39,7 +39,7 @@ impl CmsTagBase {
     }
     pub fn write(self, writer: &mut dyn Write) -> Result<()> {
         write_u32(writer, u32::from(self.signature))?;
-        write_u32(writer, u32::from_be_bytes(self.reserved))?;
+        write_u32(writer, u32::from_ne_bytes(self.reserved))?;
 
         Ok(())
     }

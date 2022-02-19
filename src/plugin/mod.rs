@@ -5,6 +5,10 @@ use std::mem::size_of;
 
 use crate::*;
 
+
+// const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
+// const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
+
 fn eof_error() -> Error {
     Error::new(
         ErrorKind::UnexpectedEof,
