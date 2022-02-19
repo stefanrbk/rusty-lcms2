@@ -35,14 +35,14 @@ pub const CMS_TRANSPARANCY: u32 = 1;
 pub const CMS_GLOSSY: u32 = 0;
 pub const CMS_MATTE: u32 = 2;
 
-// Common structures in ICC tags
+/// Common structures in ICC tags
 pub struct CmsICCData {
     pub length: u32,
     pub flag: u32,
     pub data: [u8],
 }
 
-// ICC date time
+/// ICC date time
 pub struct CmsDateTimeNumber {
     pub year: u16,
     pub month: u16,
@@ -52,7 +52,7 @@ pub struct CmsDateTimeNumber {
     pub seconds: u16,
 }
 
-// ICC XYZ
+/// ICC XYZ
 pub struct CmsEncodedXYZNumber {
     pub x: S15F16,
     pub y: S15F16,
@@ -257,6 +257,28 @@ pub mod illuminant_type {
     pub const A: u32 = 6;
     pub const E: u32 = 7;
     pub const F8: u32 = 8;
+}
+
+#[allow(non_snake_case)]
+pub struct CmsViewingConditions {
+    pub white_point: CmsCIEXYZ,
+    pub Yb: f64,
+    pub La: f64,
+    pub surround: u32,
+    pub D_value: f64,
+}
+
+/// Tone curves
+/// 
+/// This describes a curve segment. Users can increase the nuber of available types by using a proper plug-in.
+/// Parametric segments allow 10 parameters at most
+pub struct CmsCurveSegment {
+    pub x0: f32,
+    pub x1: f32,
+    pub r#type: i32,
+    pub params: [f64; 10],
+    pub n_grid_points: u32,
+    pub sampled_points: [f32]
 }
 
 pub mod plugin;
