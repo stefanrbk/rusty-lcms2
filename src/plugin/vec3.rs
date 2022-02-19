@@ -28,7 +28,7 @@ impl CmsVEC3 {
     }
     /// Vector dot product
     pub fn dot(&self, v: &Self) -> f64 {
-        self.x * v.x + self.y * v.y + self.z + v.z
+        self.x * v.x + self.y * v.y + self.z * v.z
     }
     /// Euclidean length
     pub fn length(&self) -> f64 {
