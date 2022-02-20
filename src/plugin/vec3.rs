@@ -44,6 +44,18 @@ impl CmsVEC3 {
     }
 }
 
+impl From<[f64;3]> for CmsVEC3 {
+    fn from(array: [f64;3]) -> Self {
+        CmsVEC3::new(array[0], array[1], array[2])
+    }
+}
+
+impl From<CmsVEC3> for [f64;3] {
+    fn from(value: CmsVEC3) -> Self {
+        value.as_array()
+    }
+}
+
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 impl Add for CmsVEC3 {
     type Output = Self;

@@ -1,7 +1,7 @@
-use crate::internal::MATRIX_DET_TOLERANCE;
 use super::CmsVEC3;
+use crate::internal::MATRIX_DET_TOLERANCE;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug, Default, Hash)]
 pub struct CmsMAT3 {
     pub vx: CmsVEC3,
     pub vy: CmsVEC3,
@@ -116,5 +116,41 @@ impl CmsMAT3 {
             a.vy.x * v.x + a.vy.y * v.y + a.vy.z * v.z,
             a.vz.x * v.x + a.vz.y * v.y + a.vz.z * v.z,
         )
+    }
+}
+
+impl From<[CmsVEC3; 3]> for CmsMAT3 {
+    fn from(array: [CmsVEC3; 3]) -> Self {
+        CmsMAT3 {
+            vx: array[0],
+            vy: array[1],
+            vz: array[2],
+        }
+    }
+}
+
+impl From<[f64; 9]> for CmsMAT3 {
+    fn from(array: [f64; 9]) -> Self {
+        CmsMAT3 {
+            vx: CmsVEC3::new(array[0], array[1], array[2]),
+            vy: CmsVEC3::new(array[3], array[4], array[5]),
+            vz: CmsVEC3::new(array[6], array[7], array[8]),
+        }
+    }
+}
+
+impl From<CmsMAT3> for [CmsVEC3; 3] {
+    fn from(value: CmsMAT3) -> [CmsVEC3; 3] {
+        [value.vx, value.vy, value.vz]
+    }
+}
+
+impl From<CmsMAT3> for [f64; 9] {
+    fn from(value: CmsMAT3) -> [f64; 9] {
+        [
+            value.vx.x, value.vx.y, value.vx.z,
+            value.vy.x, value.vy.y, value.vy.z,
+            value.vz.x, value.vz.y, value.vz.z
+        ]
     }
 }
