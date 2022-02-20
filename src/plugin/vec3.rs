@@ -44,7 +44,7 @@ impl CmsVEC3 {
     }
 }
 
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Neg};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 impl Add for CmsVEC3 {
     type Output = Self;
     fn add(self, other: Self) -> Self {
@@ -96,7 +96,7 @@ impl Neg for CmsVEC3 {
     }
 }
 
-use std::fmt::{Formatter, Result, Display};
+use std::fmt::{Display, Formatter, Result};
 impl Display for CmsVEC3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
