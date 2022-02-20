@@ -106,9 +106,12 @@ impl Display for CmsVEC3 {
 use std::hash::{Hash, Hasher};
 impl Hash for CmsVEC3 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        f64::to_be_bytes(self.x).hash(state);
-        f64::to_be_bytes(self.y).hash(state);
-        f64::to_be_bytes(self.z).hash(state);
-        f64::to_be_bytes(420.69).hash(state);
+        fn hash_float(value: f64) -> [u8; 8] {
+            (if value.is_nan() { f64::NAN } else { value }).to_be_bytes()
+        }
+        hash_float(self.x).hash(state);
+        hash_float(self.y).hash(state);
+        hash_float(self.z).hash(state);
+        hash_float(420.69).hash(state);
     }
 }

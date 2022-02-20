@@ -1,19 +1,26 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hash;
+use std::hash::Hasher;
+
 use super::*;
 
 // CmsVEC3 Tests
 
 fn assert_vec3(expected: &CmsVEC3, actual: &CmsVEC3) {
-    assert! (expected.x == actual.x,
+    assert!(
+        expected.x == actual.x,
         "Expected x to be {} but was {}",
         expected.x,
         actual.x
     );
-    assert! (expected.y == actual.y,
+    assert!(
+        expected.y == actual.y,
         "Expected y to be {} but was {}",
         expected.y,
         actual.y
     );
-    assert! (expected.z == actual.z,
+    assert!(
+        expected.z == actual.z,
         "Expected z to be {} but was {}",
         expected.z,
         actual.z
@@ -26,7 +33,7 @@ fn test_vec3_new() {
 
     let value = CmsVEC3::new(x, y, z);
 
-    assert_vec3(&CmsVEC3 {x: x, y: y, z: z}, &value);
+    assert_vec3(&CmsVEC3 { x: x, y: y, z: z }, &value);
 }
 
 #[test]
@@ -157,6 +164,39 @@ fn test_vec3_neg() {
 }
 
 #[test]
+fn test_vec3_fmt() {
+    let actual = format!("The vector is {}", CmsVEC3::new(-1.0, 0.5, 69.0));
+
+    let expected = "The vector is (-1, 0.5, 69)";
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn test_vec3_hash_same_for_same_input() {
+    let hash1 = calculate_hash(&CmsVEC3::new(1.0, 69.0, 420.0));
+    let hash2 = calculate_hash(&CmsVEC3::new(1.0, 69.0, 420.0));
+
+    assert_eq!(hash1, hash2);
+}
+
+#[test]
+fn test_vec3_hash_same_for_same_input_with_nan() {
+    let hash1 = calculate_hash(&CmsVEC3::new(f64::NAN, 69.0, 420.0));
+    let hash2 = calculate_hash(&CmsVEC3::new(f64::NAN, 69.0, 420.0));
+
+    assert_eq!(hash1, hash2);
+}
+
+#[test]
+fn test_vec3_hash_different_for_different_input() {
+    let hash1 = calculate_hash(&CmsVEC3::new(1.0, 69.0, 420.0));
+    let hash2 = calculate_hash(&CmsVEC3::new(2.0, 3.0, 4.0));
+
+    assert_ne!(hash1, hash2);
+}
+
+#[test]
 fn test_identity_is_identity() {
     let ident = CmsMAT3::IDENTITY;
     assert!(
@@ -170,4 +210,10 @@ fn test_identity_is_identity() {
             && ident.vz.y == 0.0
             && ident.vz.z == 1.0
     );
+}
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    t.hash(&mut hasher);
+    hasher.finish()
 }
