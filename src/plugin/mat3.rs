@@ -1,6 +1,12 @@
 use crate::internal::MATRIX_DET_TOLERANCE;
 use super::CmsVEC3;
-use super::CmsMAT3 as CmsMAT3;
+
+#[derive(Copy, Clone)]
+pub struct CmsMAT3 {
+    pub vx: CmsVEC3,
+    pub vy: CmsVEC3,
+    pub vz: CmsVEC3,
+}
 
 impl CmsMAT3 {
     /// 3x3 Identity

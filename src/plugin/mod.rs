@@ -6,10 +6,12 @@ use std::mem::size_of;
 use crate::*;
 
 mod vec3;
+mod mat3;
 #[cfg(test)]
 mod tests;
 
 pub use vec3::CmsVEC3;
+pub use mat3::CmsMAT3;
 
 // const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
@@ -21,14 +23,6 @@ fn eof_error() -> Error {
     )
 }
 
-
-#[derive(Copy, Clone)]
-pub struct CmsMAT3 {
-    pub vx: CmsVEC3,
-    pub vy: CmsVEC3,
-    pub vz: CmsVEC3,
-}
-mod mat3;
 
 pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
     let mut buf = [0u8; size_of::<u8>()];
