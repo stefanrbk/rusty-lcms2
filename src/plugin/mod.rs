@@ -10,6 +10,7 @@ mod mat3;
 #[cfg(test)]
 mod tests;
 
+// Public exports
 pub use vec3::CmsVEC3;
 pub use mat3::CmsMAT3;
 
