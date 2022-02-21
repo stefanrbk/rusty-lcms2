@@ -1,3 +1,5 @@
+use std::ops::MulAssign;
+use std::ops::Mul;
 use super::CmsVEC3;
 use crate::internal::MATRIX_DET_TOLERANCE;
 
@@ -152,5 +154,30 @@ impl From<CmsMAT3> for [f64; 9] {
             value.vy.x, value.vy.y, value.vy.z,
             value.vz.x, value.vz.y, value.vz.z
         ]
+    }
+}
+
+impl Mul for CmsMAT3 {
+    type Output = CmsMAT3;
+    fn mul(self, other: Self) -> Self {
+        self.per(other)
+    }
+}
+
+impl MulAssign for CmsMAT3 {
+    fn mul_assign(&mut self, other: Self) {
+        let matrix = self.per(other);
+
+        self.vx.x = matrix.vx.x;
+        self.vx.y = matrix.vx.y;
+        self.vx.z = matrix.vx.z;
+
+        self.vy.x = matrix.vy.x;
+        self.vy.y = matrix.vy.y;
+        self.vy.z = matrix.vy.z;
+
+        self.vz.x = matrix.vz.x;
+        self.vz.y = matrix.vz.y;
+        self.vz.z = matrix.vz.z;
     }
 }
