@@ -17,6 +17,33 @@ pub use mat3::CmsMAT3;
 // const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
 
+#[cfg(CMS_USE_BIG_ENDIAN)]
+pub fn adjust_endianness_16(word: u16) -> u16 {
+    word
+}
+#[cfg(not(CMS_USE_BIG_ENDIAN))]
+pub fn adjust_endianness_16(word: u16) -> u16 {
+    u16::from_be_bytes(word.to_le_bytes())
+}
+
+#[cfg(CMS_USE_BIG_ENDIAN)]
+pub fn adjust_endianness_32(dword: u32) -> u32 {
+    dword
+}
+#[cfg(not(CMS_USE_BIG_ENDIAN))]
+pub fn adjust_endianness_32(dword: u32) -> u32 {
+    u32::from_be_bytes(dword.to_le_bytes())
+}
+
+#[cfg(CMS_USE_BIG_ENDIAN)]
+pub fn adjust_endianness_64(qword: u64) -> u64 {
+    qword
+}
+#[cfg(not(CMS_USE_BIG_ENDIAN))]
+pub fn adjust_endianness_64(qword: u64) -> u64 {
+    u64::from_be_bytes(qword.to_le_bytes())
+}
+
 fn eof_error() -> Error {
     Error::new(
         ErrorKind::UnexpectedEof,
