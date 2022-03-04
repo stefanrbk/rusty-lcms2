@@ -16,9 +16,9 @@ mod tag_base;
 mod tests;
 
 // Public exports
-pub use vec3::CmsVEC3;
 pub use mat3::CmsMAT3;
 pub use tag_base::CmsTagBase;
+pub use vec3::CmsVEC3;
 
 // const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
@@ -56,7 +56,6 @@ fn eof_error() -> Error {
         "Can't read from buffer. Unexpected EOF.",
     )
 }
-
 
 pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
     let mut buf = [0u8; size_of::<u8>()];
@@ -269,6 +268,8 @@ pub fn f64_to_s15f16(v: f64) -> S15F16 {
     f64::floor(v * 65536.0 + 0.5) as S15F16
 }
 
+pub const PLUGIN_TRANSFORM: CmsSignature = CmsSignature::new(b"xfmH");
+
 pub struct PluginBase<'a> {
     pub magic: CmsSignature,
     pub expected_version: u32,
@@ -277,3 +278,12 @@ pub struct PluginBase<'a> {
 }
 
 pub const MAX_TYPES_IN_LCMS_PLUGIN: u8 = 20;
+
+/* ------------------------------------------------- Full Transform ------------------------------------------------- */
+
+pub struct Stride {
+    pub bytes_per_line_in: u32,
+    pub bytes_per_line_out: u32,
+    pub bytes_per_plane_in: u32,
+    pub bytes_per_plane_out: u32,
+}
