@@ -277,3 +277,12 @@ pub fn s15f16_to_f64(fixed32: S15F16) -> f64 {
 pub fn f64_to_s15f16(v: f64) -> S15F16 {
     f64::floor(v * 65536.0 + 0.5) as S15F16
 }
+
+pub struct PluginBase<'a> {
+    pub magic: CmsSignature,
+    pub expected_version: u32,
+    pub r#type: CmsSignature,
+    pub next: &'a PluginBase<'a>,
+}
+
+pub const MAX_TYPES_IN_LCMS_PLUGIN: u8 = 20;
