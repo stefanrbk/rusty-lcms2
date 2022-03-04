@@ -6,13 +6,19 @@ use std::mem::size_of;
 use crate::*;
 
 mod vec3;
+
 mod mat3;
+
+/// ICC base tag
+mod tag_base;
+
 #[cfg(test)]
 mod tests;
 
 // Public exports
 pub use vec3::CmsVEC3;
 pub use mat3::CmsMAT3;
+pub use tag_base::CmsTagBase;
 
 // const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
@@ -235,21 +241,6 @@ pub fn write_f64(writer: &mut dyn Write, value: f64) -> Result<()> {
     } else {
         Ok(())
     }
-}
-
-/// ICC base tag
-pub struct CmsTagBase {
-    pub signature: CmsSignature,
-    pub reserved: [u8; 4],
-}
-mod tag_base;
-
-pub fn read_type_base(reader: &mut dyn Read) -> CmsSignature {
-    let value = CmsTagBase::read(reader);
-    if value.is_err() {
-        return CmsSignature(0);
-    }
-    return value.unwrap().signature;
 }
 
 pub fn u8f8_to_f64(fixed8: U8F8) -> f64 {

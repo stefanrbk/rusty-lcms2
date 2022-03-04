@@ -1,9 +1,15 @@
+use crate::CmsSignature;
 use std::io::Read;
-use std::io::Write;
 use std::io::Result;
+use std::io::Write;
 use std::mem::size_of;
 
-use super::*;
+use super::{eof_error, write_u32};
+
+pub struct CmsTagBase {
+    pub signature: CmsSignature,
+    pub reserved: [u8; 4],
+}
 
 impl From<u32> for CmsTagBase {
     fn from(value: u32) -> Self {
@@ -36,6 +42,13 @@ impl CmsTagBase {
             signature: sig,
             reserved: buf,
         })
+    }
+    pub fn read_type_base(reader: &mut dyn Read) -> CmsSignature {
+        let value = CmsTagBase::read(reader);
+        if value.is_err() {
+            return CmsSignature(0);
+        }
+        return value.unwrap().signature;
     }
     pub fn write(self, writer: &mut dyn Write) -> Result<()> {
         write_u32(writer, u32::from(self.signature))?;
