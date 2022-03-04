@@ -1,11 +1,11 @@
 #[derive(Copy, Clone, PartialEq, Debug, Default)]
-pub struct CmsVEC3 {
+pub struct Vec3 {
     pub x: f64,
     pub y: f64,
     pub z: f64,
 }
 
-impl CmsVEC3 {
+impl Vec3 {
     /// Initializes a new vector
     pub const fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x: x, y: y, z: z }
@@ -44,52 +44,52 @@ impl CmsVEC3 {
     }
 }
 
-impl From<[f64;3]> for CmsVEC3 {
-    fn from(array: [f64;3]) -> Self {
-        CmsVEC3::new(array[0], array[1], array[2])
+impl From<[f64; 3]> for Vec3 {
+    fn from(array: [f64; 3]) -> Self {
+        Self::new(array[0], array[1], array[2])
     }
 }
 
-impl From<CmsVEC3> for [f64;3] {
-    fn from(value: CmsVEC3) -> Self {
+impl From<Vec3> for [f64; 3] {
+    fn from(value: Vec3) -> Self {
         value.as_array()
     }
 }
 
 use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-impl Add for CmsVEC3 {
+impl Add for Vec3 {
     type Output = Self;
     fn add(self, other: Self) -> Self {
         Self::new(self.x + other.x, self.y + other.y, self.z + other.z)
     }
 }
-impl AddAssign for CmsVEC3 {
+impl AddAssign for Vec3 {
     fn add_assign(&mut self, other: Self) {
         self.x += other.x;
         self.y += other.y;
         self.z += other.z;
     }
 }
-impl Sub for CmsVEC3 {
+impl Sub for Vec3 {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         Self::new(self.x - other.x, self.y - other.y, self.z - other.z)
     }
 }
-impl SubAssign for CmsVEC3 {
+impl SubAssign for Vec3 {
     fn sub_assign(&mut self, other: Self) {
         self.x -= other.x;
         self.y -= other.y;
         self.z -= other.z;
     }
 }
-impl Mul for CmsVEC3 {
+impl Mul for Vec3 {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
         self.cross(&other)
     }
 }
-impl MulAssign for CmsVEC3 {
+impl MulAssign for Vec3 {
     fn mul_assign(&mut self, other: Self) {
         let result = Self {
             x: self.y * other.z - other.y * self.z,
@@ -101,7 +101,7 @@ impl MulAssign for CmsVEC3 {
         self.z = result.z;
     }
 }
-impl Neg for CmsVEC3 {
+impl Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self {
         Self::new(-self.x, -self.y, -self.z)
@@ -109,14 +109,14 @@ impl Neg for CmsVEC3 {
 }
 
 use std::fmt::{Display, Formatter, Result};
-impl Display for CmsVEC3 {
+impl Display for Vec3 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
 use std::hash::{Hash, Hasher};
-impl Hash for CmsVEC3 {
+impl Hash for Vec3 {
     fn hash<H: Hasher>(&self, state: &mut H) {
         fn hash_float(value: f64) -> [u8; 8] {
             (if value.is_nan() { f64::NAN } else { value }).to_be_bytes()

@@ -1,9 +1,9 @@
-use crate::CmsSignature;
+use crate::Signature;
 
-pub const INPUT_CLASS: CmsSignature = CmsSignature::new(b"scnr");
-pub const DISPLAY_CLASS: CmsSignature = CmsSignature::new(b"mntr");
-pub const OUTPUT_CLASS: CmsSignature = CmsSignature::new(b"prtr");
-pub const LINK_CLASS: CmsSignature = CmsSignature::new(b"link");
-pub const ABSTRACT_CLASS: CmsSignature = CmsSignature::new(b"abst");
-pub const COLOR_SPACE_CLASS: CmsSignature = CmsSignature::new(b"spac");
-pub const NAMED_COLOR_CLASS: CmsSignature = CmsSignature::new(b"nmcl");
+pub const INPUT: Signature = Signature::new(b"scnr");
+pub const DISPLAY: Signature = Signature::new(b"mntr");
+pub const OUTPUT: Signature = Signature::new(b"prtr");
+pub const LINK: Signature = Signature::new(b"link");
+pub const ABSTRACT: Signature = Signature::new(b"abst");
+pub const COLOR_SPACE: Signature = Signature::new(b"spac");
+pub const NAMED_COLOR: Signature = Signature::new(b"nmcl");

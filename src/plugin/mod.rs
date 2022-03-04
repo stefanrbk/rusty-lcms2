@@ -16,9 +16,9 @@ mod tag_base;
 mod tests;
 
 // Public exports
-pub use mat3::CmsMAT3;
-pub use tag_base::CmsTagBase;
-pub use vec3::CmsVEC3;
+pub use mat3::Mat3;
+pub use tag_base::TagBase;
+pub use vec3::Vec3;
 
 // const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
@@ -59,23 +59,18 @@ fn eof_error() -> Error {
 
 pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
     let mut buf = [0u8; size_of::<u8>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<u8>() {
-        Err(eof_error())
-    } else {
-        Ok(buf[0])
+    match reader.read(&mut buf)? {
+        len if len == size_of::<u8>() => Ok(buf[0]),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn read_u16(reader: &mut dyn Read) -> Result<u16> {
     let mut buf = [0u8; size_of::<u16>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<u16>() {
-        Err(eof_error())
-    } else {
-        Ok(u16::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<u16>() => Ok(u16::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
@@ -89,61 +84,51 @@ pub fn read_u16_array(reader: &mut dyn Read, result: &mut [u16]) -> Result<()> {
 
 pub fn read_u32(reader: &mut dyn Read) -> Result<u32> {
     let mut buf = [0u8; size_of::<u32>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<u32>() {
-        Err(eof_error())
-    } else {
-        Ok(u32::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<u32>() => Ok(u32::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn read_f32(reader: &mut dyn Read) -> Result<f32> {
     let mut buf = [0u8; size_of::<f32>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<f32>() {
-        Err(eof_error())
-    } else {
-        Ok(f32::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<f32>() => Ok(f32::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn read_u64(reader: &mut dyn Read) -> Result<u64> {
     let mut buf = [0u8; size_of::<u64>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<u64>() {
-        Err(eof_error())
-    } else {
-        Ok(u64::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<u64>() => Ok(u64::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn read_s15f16(reader: &mut dyn Read) -> Result<S15F16> {
     let mut buf = [0u8; size_of::<S15F16>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<S15F16>() {
-        Err(eof_error())
-    } else {
-        Ok(S15F16::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<S15F16>() => Ok(S15F16::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
-fn read_f64(reader: &mut dyn Read) -> Result<f64> {
+pub fn read_f64(reader: &mut dyn Read) -> Result<f64> {
     let mut buf = [0u8; size_of::<f64>()];
-    let len = reader.read(&mut buf)?;
-
-    if len < size_of::<f64>() {
-        Err(eof_error())
-    } else {
-        Ok(f64::from_be_bytes(buf))
+    
+    match reader.read(&mut buf)? {
+        len if len == size_of::<f64>() => Ok(f64::from_be_bytes(buf)),
+        _ => Err(eof_error()),
     }
 }
 
-pub fn read_xyz(reader: &mut dyn Read) -> Result<CmsCIEXYZ> {
-    Ok(CmsCIEXYZ {
+pub fn read_xyz(reader: &mut dyn Read) -> Result<CIEXYZ> {
+    Ok(CIEXYZ {
         X: read_f64(reader)?,
         Y: read_f64(reader)?,
         Z: read_f64(reader)?,
@@ -152,23 +137,19 @@ pub fn read_xyz(reader: &mut dyn Read) -> Result<CmsCIEXYZ> {
 
 pub fn write_u8(writer: &mut dyn Write, value: u8) -> Result<()> {
     let buf = [value];
-    let len = writer.write(&buf)?;
 
-    if len < size_of::<u8>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    match writer.write(&buf)? {
+        len if len == size_of::<u8>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn write_u16(writer: &mut dyn Write, value: u16) -> Result<()> {
     let buf = u16::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<u16>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<u16>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
@@ -181,49 +162,41 @@ pub fn write_u16_array(writer: &mut dyn Write, value: &[u16]) -> Result<()> {
 
 pub fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
     let buf = u32::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<u32>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<u32>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn write_f32(writer: &mut dyn Write, value: f32) -> Result<()> {
     let buf = f32::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<f32>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<f32>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn write_u64(writer: &mut dyn Write, value: u64) -> Result<()> {
     let buf = u64::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<u64>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<u64>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
 pub fn write_s15f16(writer: &mut dyn Write, value: S15F16) -> Result<()> {
     let buf = S15F16::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<S15F16>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<S15F16>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
-pub fn write_xyz(writer: &mut dyn Write, value: CmsCIEXYZ) -> Result<()> {
+pub fn write_xyz(writer: &mut dyn Write, value: CIEXYZ) -> Result<()> {
     write_f64(writer, value.X)?;
     write_f64(writer, value.Y)?;
     write_f64(writer, value.Z)?;
@@ -233,12 +206,10 @@ pub fn write_xyz(writer: &mut dyn Write, value: CmsCIEXYZ) -> Result<()> {
 
 pub fn write_f64(writer: &mut dyn Write, value: f64) -> Result<()> {
     let buf = f64::to_be_bytes(value);
-    let len = writer.write(&buf)?;
-
-    if len < size_of::<f64>() {
-        Err(eof_error())
-    } else {
-        Ok(())
+    
+    match writer.write(&buf)? {
+        len if len == size_of::<f64>() => Ok(()),
+        _ => Err(eof_error()),
     }
 }
 
@@ -268,12 +239,10 @@ pub fn f64_to_s15f16(v: f64) -> S15F16 {
     f64::floor(v * 65536.0 + 0.5) as S15F16
 }
 
-pub const PLUGIN_TRANSFORM: CmsSignature = CmsSignature::new(b"xfmH");
-
 pub struct PluginBase<'a> {
-    pub magic: CmsSignature,
+    pub magic: Signature,
     pub expected_version: u32,
-    pub r#type: CmsSignature,
+    pub r#type: Signature,
     pub next: &'a PluginBase<'a>,
 }
 

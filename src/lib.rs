@@ -8,42 +8,48 @@ pub type U8F8 = u16;
 pub type S15F16 = i32;
 pub type U16F16 = u32;
 
-pub struct CmsSignature(u32);
 mod signature;
+pub use signature::Signature;
 
-pub const CMS_USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
+pub const USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
     true
 } else {
     false
 };
 
-// D50 XYZ normalized to Y=1.0
-pub const CMS_D50_X: f64 = 0.9642;
-pub const CMS_D50_Y: f64 = 1.0;
-pub const CMS_D50_Z: f64 = 0.8249;
+/// D50 XYZ normalized to Y=1.0
+pub mod d50 {
+    pub const X: f64 = 0.9642;
+    pub const Y: f64 = 1.0;
+    pub const Z: f64 = 0.8249;
+}
 
-// V4 perceptual black
-pub const CMS_PERCEPTUAL_BLACK_X: f64 = 0.00336;
-pub const CMS_PERCEPTUAL_BLACK_Y: f64 = 0.0034731;
-pub const CMS_PERCEPTUAL_BLACK_Z: f64 = 0.00287;
+/// V4 perceptual black
+pub mod perceptual_black {
+    pub const X: f64 = 0.00336;
+    pub const Y: f64 = 0.0034731;
+    pub const Z: f64 = 0.00287;
+}
 
 pub mod signatures;
 
 // Device attributes, currently defined values correspond to the low 4 bytes of the 8 byte attribute quantity
-pub const CMS_REFLECTIVE: u32 = 0;
-pub const CMS_TRANSPARANCY: u32 = 1;
-pub const CMS_GLOSSY: u32 = 0;
-pub const CMS_MATTE: u32 = 2;
+pub mod device_attributes {
+    pub const REFLECTIVE: u32 = 0;
+    pub const TRANSPARANCY: u32 = 1;
+    pub const GLOSSY: u32 = 0;
+    pub const MATTE: u32 = 2;
+}
 
 /// Common structures in ICC tags
-pub struct CmsICCData {
+pub struct ICCData {
     pub length: u32,
     pub flag: u32,
     pub data: [u8],
 }
 
 /// ICC date time
-pub struct CmsDateTimeNumber {
+pub struct DateTimeNumber {
     pub year: u16,
     pub month: u16,
     pub day: u16,
@@ -53,43 +59,43 @@ pub struct CmsDateTimeNumber {
 }
 
 /// ICC XYZ
-pub struct CmsEncodedXYZNumber {
+pub struct EncodedXYZNumber {
     pub x: S15F16,
     pub y: S15F16,
     pub z: S15F16,
 }
 
 /// Profile ID as computed by MD5 algorithm
-pub union CmsProfileID {
+pub union ProfileID {
     pub id8: [u8; 16],
     pub id16: [u16; 8],
     pub id32: [u32; 4],
 }
 
 /// Profile Header -- 32-bit aligned
-pub struct CmsICCHeader {
+pub struct ICCHeader {
     /// Profile size in bytes
     pub size: u32,
     /// CMM for this profile
-    pub cmm_id: CmsSignature,
+    pub cmm_id: Signature,
     /// Format version number
     pub version: u32,
     /// Type of profile
-    pub device_class: CmsSignature,
+    pub device_class: Signature,
     /// Color space of data
-    pub color_space: CmsSignature,
+    pub color_space: Signature,
     /// PCS, XYZ or LAB only
-    pub pcs: CmsSignature,
+    pub pcs: Signature,
     /// Date profile was created
-    pub date: CmsDateTimeNumber,
+    pub date: DateTimeNumber,
     /// Magic Number to identity an ICC profile
-    pub magic: CmsSignature,
+    pub magic: Signature,
     /// Primary platform
-    pub platform: CmsSignature,
+    pub platform: Signature,
     /// Various bit settings
     pub flags: u32,
     /// Device manufacturer
-    pub manufacturer: CmsSignature,
+    pub manufacturer: Signature,
     /// Device model Number
     pub model: u32,
     /// Device attributes
@@ -97,61 +103,29 @@ pub struct CmsICCHeader {
     /// Rendering intent
     pub rendering_intent: u32,
     /// Profile illuminant
-    pub illuminant: CmsEncodedXYZNumber,
+    pub illuminant: EncodedXYZNumber,
     /// Profile creator
-    pub creator: CmsSignature,
+    pub creator: Signature,
     /// Profile ID using MD5
-    pub profile_id: CmsProfileID,
+    pub profile_id: ProfileID,
     /// Reserved for future use
     pub reserved: [u8; 28],
 }
 
 /// A tag entry in directory
-pub struct CmsTagEntry {
+pub struct TagEntry {
     /// The tag signature
-    pub signature: CmsSignature,
+    pub signature: Signature,
     /// Start of tag
     pub offset: u32,
     /// Size in bytes
     pub size: u32,
 }
 
-bitfield! {
-    /// Format of pixel is defined by one cmsUInt32Number, using bit fields as follows
-    ///
-    ///                                   2                1          0
-    ///                            4 3 2 10987 6 5 4 3 2 1 098 7654 321
-    ///                            M A O TTTTT U Y F P X S EEE CCCC BBB
-    ///
-    ///                M: Premultiplied alpha (only works when extra samples is 1)
-    ///                A: Floating point -- With this flag we can differentiate 16 bits as float and as int
-    ///                O: Optimized -- previous optimization already returns the final 8-bit value
-    ///                T: Pixeltype
-    ///                F: Flavor  0=MinIsBlack(Chocolate) 1=MinIsWhite(Vanilla)
-    ///                P: Planar? 0=Chunky, 1=Planar
-    ///                X: swap 16 bps endianness?
-    ///                S: Do swap? ie, BGR, KYMC
-    ///                E: Extra samples
-    ///                C: Channels (Samples per pixel)
-    ///                B: bytes per sample
-    ///                Y: Swap first - changes ABGR to BGRA and KCMY to CMYK
-    pub struct CmsPixelType(u32);
-    pub u8, bps, set_bps: 2, 0;
-    pub u8, channels, set_channels: 6, 3;
-    pub u8, extra, set_extra: 9, 7;
-    pub do_swap, set_do_swap: 10;
-    pub endian16, set_endian16: 11;
-    pub planar, set_planar: 12;
-    pub flavor, set_flavor: 13;
-    pub swap_first, set_swap_first: 14;
-    u8, _color_space, _set_color_space: 20, 16;
-    pub optimized, set_optimized: 21;
-    pub float, set_float: 22;
-    pub premul, set_premul: 23;
-}
 mod pixel_type;
+pub use pixel_type::PixelType;
 
-pub enum CmsColorSpace {
+pub enum ColorSpace {
     Any = 0,
     // 1 & 2 are reserved
     Gray = 3,
@@ -186,64 +160,62 @@ pub enum CmsColorSpace {
     LabV2 = 30,
 }
 
-#[allow(non_snake_case)]
-pub struct CmsCIEXYZ {
+pub struct CIEXYZ {
     pub X: f64,
     pub Y: f64,
     pub Z: f64,
 }
 
 #[allow(non_snake_case)]
-pub struct CmsCIExyY {
+pub struct CIExyY {
     pub x: f64,
     pub y: f64,
     pub Y: f64,
 }
 
 #[allow(non_snake_case)]
-pub struct CmsCIELab {
+pub struct CIELab {
     pub L: f64,
     pub a: f64,
     pub b: f64,
 }
 
 #[allow(non_snake_case)]
-pub struct CmsCIELCh {
+pub struct CIELCh {
     pub L: f64,
     pub C: f64,
     pub h: f64,
 }
 
-#[allow(non_snake_case)]
-pub struct CmsCIEJCh {
+pub struct CIEJCh {
     pub J: f64,
     pub C: f64,
     pub h: f64,
 }
 
-pub struct CmsCIEXYZTriple {
-    pub red: CmsCIEXYZ,
-    pub green: CmsCIEXYZ,
-    pub blue: CmsCIEXYZ,
+pub struct CIEXYZTriple {
+    pub red: CIEXYZ,
+    pub green: CIEXYZ,
+    pub blue: CIEXYZ,
 }
 
-pub struct CmsCIExyYTripple {
-    pub red: CmsCIExyY,
-    pub green: CmsCIExyY,
-    pub blue: CmsCIExyY,
+pub struct CIExyYTripple {
+    pub red: CIExyY,
+    pub green: CIExyY,
+    pub blue: CIExyY,
 }
 
-pub struct CmsICCMeasurementConditions {
+pub struct ICCMeasurementConditions {
     pub observer: u32,
-    pub backing: CmsCIEXYZ,
+    pub backing: CIEXYZ,
     pub geometry: u32,
     pub flare: f64,
     pub illuminant_type: u32,
 }
 
-pub struct CmsICCViewingConditions {
-    pub illuminant_xyz: CmsCIEXYZ,
-    pub surround_xyz: CmsCIEXYZ,
+pub struct ICCViewingConditions {
+    pub illuminant_xyz: CIEXYZ,
+    pub surround_xyz: CIEXYZ,
     pub illuminant_type: u32,
 }
 
@@ -260,8 +232,8 @@ pub mod illuminant_type {
 }
 
 #[allow(non_snake_case)]
-pub struct CmsViewingConditions {
-    pub white_point: CmsCIEXYZ,
+pub struct ViewingConditions {
+    pub white_point: CIEXYZ,
     pub Yb: f64,
     pub La: f64,
     pub surround: u32,
@@ -272,7 +244,7 @@ pub struct CmsViewingConditions {
 /// 
 /// This describes a curve segment. Users can increase the nuber of available types by using a proper plug-in.
 /// Parametric segments allow 10 parameters at most
-pub struct CmsCurveSegment {
+pub struct CurveSegment {
     pub x0: f32,
     pub x1: f32,
     pub r#type: i32,

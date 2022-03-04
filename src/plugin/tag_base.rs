@@ -1,4 +1,4 @@
-use crate::CmsSignature;
+use crate::Signature;
 use std::io::Read;
 use std::io::Result;
 use std::io::Write;
@@ -6,47 +6,47 @@ use std::mem::size_of;
 
 use super::{eof_error, write_u32};
 
-pub struct CmsTagBase {
-    pub signature: CmsSignature,
+pub struct TagBase {
+    pub signature: Signature,
     pub reserved: [u8; 4],
 }
 
-impl From<u32> for CmsTagBase {
+impl From<u32> for TagBase {
     fn from(value: u32) -> Self {
-        CmsTagBase {
-            signature: CmsSignature::from(value),
+        Self {
+            signature: Signature::from(value),
             reserved: [0u8; 4],
         }
     }
 }
-impl From<CmsTagBase> for u32 {
-    fn from(value: CmsTagBase) -> u32 {
-        u32::from(value.signature)
+impl From<TagBase> for u32 {
+    fn from(value: TagBase) -> Self {
+        Self::from(value.signature)
     }
 }
-impl CmsTagBase {
-    pub fn read(reader: &mut dyn Read) -> Result<CmsTagBase> {
-        let mut buf = [0u8; size_of::<CmsSignature>()];
+impl TagBase {
+    pub fn read(reader: &mut dyn Read) -> Result<Self> {
+        let mut buf = [0u8; size_of::<Signature>()];
         let len = reader.read(&mut buf)?;
-        if len < size_of::<CmsSignature>() {
+        if len < size_of::<Signature>() {
             return Err(eof_error());
         }
-        let sig = CmsSignature(u32::from_be_bytes(buf));
+        let sig = Signature::new(&buf);
 
         let len = reader.read(&mut buf)?;
-        if len < size_of::<CmsSignature>() {
+        if len < size_of::<Signature>() {
             return Err(eof_error());
         }
 
-        Ok(CmsTagBase {
+        Ok(Self {
             signature: sig,
             reserved: buf,
         })
     }
-    pub fn read_type_base(reader: &mut dyn Read) -> CmsSignature {
-        let value = CmsTagBase::read(reader);
+    pub fn read_type_base(reader: &mut dyn Read) -> Signature {
+        let value = Self::read(reader);
         if value.is_err() {
-            return CmsSignature(0);
+            return Default::default();
         }
         return value.unwrap().signature;
     }

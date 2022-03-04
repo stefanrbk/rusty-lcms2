@@ -1,8 +1,8 @@
-use crate::CmsSignature;
+use crate::Signature;
 
-pub const MACINTOSH: CmsSignature = CmsSignature::new(b"APPL");
-pub const MICROSOFT: CmsSignature = CmsSignature::new(b"MSFT");
-pub const SOLARIS: CmsSignature = CmsSignature::new(b"SUNW");
-pub const SGI: CmsSignature = CmsSignature::new(b"SGI ");
-pub const TALIGENT: CmsSignature = CmsSignature::new(b"TGNT");
-pub const UNICES: CmsSignature = CmsSignature::new(b"*nix");
+pub const MACINTOSH: Signature = Signature::new(b"APPL");
+pub const MICROSOFT: Signature = Signature::new(b"MSFT");
+pub const SOLARIS: Signature = Signature::new(b"SUNW");
+pub const SGI: Signature = Signature::new(b"SGI ");
+pub const TALIGENT: Signature = Signature::new(b"TGNT");
+pub const UNICES: Signature = Signature::new(b"*nix");
