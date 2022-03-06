@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub const LCMS_VERSION: i32 = 2120;
 
 // Types
