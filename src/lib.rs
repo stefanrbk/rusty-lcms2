@@ -49,6 +49,7 @@ pub struct ICCData {
 }
 
 /// ICC date time
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct DateTimeNumber {
     pub year: u16,
     pub month: u16,
@@ -59,6 +60,7 @@ pub struct DateTimeNumber {
 }
 
 /// ICC XYZ
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct EncodedXYZNumber {
     pub x: S15F16,
     pub y: S15F16,
@@ -66,13 +68,33 @@ pub struct EncodedXYZNumber {
 }
 
 /// Profile ID as computed by MD5 algorithm
+#[derive(Copy, Clone, Eq)]
 pub union ProfileID {
     pub id8: [u8; 16],
     pub id16: [u16; 8],
     pub id32: [u32; 4],
 }
 
+impl std::fmt::Debug for ProfileID {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let mut value = String::with_capacity(64);
+        for i in 0..16 {
+            value += format!(" {:2x} ", self.id8[0]);
+        }
+
+        f.debug_struct("ProfileID")
+         .field("value", &value)
+         .finish()
+    }
+}
+impl PartialEq for ProfileID {
+    fn eq(&self, other: &Self) -> bool {
+        self.id8 == other.id8
+    }
+}
+
 /// Profile Header -- 32-bit aligned
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct ICCHeader {
     /// Profile size in bytes
     pub size: u32,
@@ -113,6 +135,7 @@ pub struct ICCHeader {
 }
 
 /// A tag entry in directory
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct TagEntry {
     /// The tag signature
     pub signature: Signature,
@@ -161,6 +184,7 @@ pub enum ColorSpace {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIEXYZ {
     pub X: f64,
     pub Y: f64,
@@ -168,6 +192,7 @@ pub struct CIEXYZ {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIExyY {
     pub x: f64,
     pub y: f64,
@@ -175,6 +200,7 @@ pub struct CIExyY {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIELab {
     pub L: f64,
     pub a: f64,
@@ -182,6 +208,7 @@ pub struct CIELab {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIELCh {
     pub L: f64,
     pub C: f64,
@@ -189,24 +216,28 @@ pub struct CIELCh {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIEJCh {
     pub J: f64,
     pub C: f64,
     pub h: f64,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIEXYZTriple {
     pub red: CIEXYZ,
     pub green: CIEXYZ,
     pub blue: CIEXYZ,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CIExyYTripple {
     pub red: CIExyY,
     pub green: CIExyY,
     pub blue: CIExyY,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ICCMeasurementConditions {
     pub observer: u32,
     pub backing: CIEXYZ,
@@ -215,6 +246,7 @@ pub struct ICCMeasurementConditions {
     pub illuminant_type: u32,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ICCViewingConditions {
     pub illuminant_xyz: CIEXYZ,
     pub surround_xyz: CIEXYZ,
@@ -234,6 +266,7 @@ pub mod illuminant_type {
 }
 
 #[allow(non_snake_case)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ViewingConditions {
     pub white_point: CIEXYZ,
     pub Yb: f64,
@@ -243,7 +276,7 @@ pub struct ViewingConditions {
 }
 
 /// Tone curves
-/// 
+///
 /// This describes a curve segment. Users can increase the nuber of available types by using a proper plug-in.
 /// Parametric segments allow 10 parameters at most
 pub struct CurveSegment {
@@ -252,8 +285,8 @@ pub struct CurveSegment {
     pub r#type: i32,
     pub params: [f64; 10],
     pub n_grid_points: u32,
-    pub sampled_points: [f32]
+    pub sampled_points: [f32],
 }
 
-pub mod plugin;
 mod internal;
+pub mod plugin;
