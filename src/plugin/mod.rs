@@ -248,6 +248,44 @@ pub struct PluginBase<'a> {
 
 pub const MAX_TYPES_IN_LCMS_PLUGIN: u8 = 20;
 
+/* ---------------------------------------------------- Tag type ---------------------------------------------------- */
+
+pub trait TagTypeHandler {
+    type TagType: Sized;
+
+    fn get_signature() -> Signature
+    where
+        Self: Sized;
+    fn get_version() -> u32
+    where
+        Self: Sized;
+    fn read(reader: &mut dyn Read, items: &mut [Self::TagType], tag_size: usize) -> Result<usize>
+    where
+        Self: Sized;
+    fn write(writer: &mut dyn Write, items: &[Self::TagType], count: usize) -> Result<()>
+    where
+        Self: Sized;
+}
+
+/* ------------------------------------------------------ Tags ------------------------------------------------------ */
+
+pub type DecideType = fn(f64) -> Signature;
+
+pub struct TagDescriptor {
+    /// If this tag needs to be an array, how many elements should keep
+    pub element_count: u32,
+
+    pub supported_types: &'static [Signature],
+
+    pub decide_type: DecideType,
+}
+
+pub struct PluginTag<'a> {
+    pub base: PluginBase<'a>,
+    pub signature: Signature,
+    pub descriptor: TagDescriptor,
+}
+
 /* ------------------------------------------------- Full Transform ------------------------------------------------- */
 
 pub struct Stride {
