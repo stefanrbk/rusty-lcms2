@@ -16,15 +16,13 @@ impl fmt::Debug for Signature {
             Err(_) => {
                 let mut line = String::with_capacity(16);
                 for i in 0..4 {
-                    line += format!(" {:2x} ", bytes[i]);
+                    line.push_str(format!(" {:2x} ", bytes[i]).as_str());
                 }
                 line
-            },
+            }
         };
 
-        f.debug_struct("Signature")
-         .field("value", &value)
-         .finish()
+        f.debug_struct("Signature").field("value", &value).finish()
     }
 }
 impl Default for Signature {
