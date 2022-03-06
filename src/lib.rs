@@ -1,5 +1,3 @@
-use bitfield::bitfield;
-
 pub const LCMS_VERSION: i32 = 2120;
 
 // Types
@@ -160,6 +158,7 @@ pub enum ColorSpace {
     LabV2 = 30,
 }
 
+#[allow(non_snake_case)]
 pub struct CIEXYZ {
     pub X: f64,
     pub Y: f64,
@@ -187,6 +186,7 @@ pub struct CIELCh {
     pub h: f64,
 }
 
+#[allow(non_snake_case)]
 pub struct CIEJCh {
     pub J: f64,
     pub C: f64,

@@ -1,8 +1,9 @@
-use super::ColorSpace as ColorSpace;
+use super::ColorSpace;
 
 use bitfield::bitfield;
 
 bitfield! {
+    /// ```text
     /// Format of pixel is defined by one cmsUInt32Number, using bit fields as follows
     ///
     ///                                   2                1          0
@@ -21,6 +22,7 @@ bitfield! {
     ///                C: Channels (Samples per pixel)
     ///                B: bytes per sample
     ///                Y: Swap first - changes ABGR to BGRA and KCMY to CMYK
+    /// ```
     pub struct PixelType(u32);
     pub u8, bps, set_bps: 2, 0;
     pub u8, channels, set_channels: 6, 3;
@@ -145,7 +147,6 @@ impl PixelType {
     PixelTypeDef!(pub const BGRA_16; color_space ColorSpace::Rgb, extra 1, channels 3, bps 2, do_swap, swap_first);
     PixelTypeDef!(pub const BGRA_16_PREMUL; color_space ColorSpace::Rgb, extra 1, channels 3, bps 2, do_swap, swap_first, premul);
     PixelTypeDef!(pub const BGRA_16_SE; color_space ColorSpace::Rgb, extra 1, channels 3, bps 2, endian16, do_swap, swap_first);
-    
     PixelTypeDef!(pub const CMY_8; color_space ColorSpace::Cmy, channels 3, bps 1);
     PixelTypeDef!(pub const CMY_8_PLANAR; color_space ColorSpace::Cmy, channels 3, bps 1, planar);
     PixelTypeDef!(pub const CMY_16; color_space ColorSpace::Cmy, channels 3, bps 2);
@@ -305,7 +306,6 @@ impl PixelType {
     PixelTypeDef!(pub const RGB_HALF_FLT; float, color_space ColorSpace::Rgb, channels 3, bps 2);
     PixelTypeDef!(pub const RGBA_HALF_FLT; float, color_space ColorSpace::Rgb, extra 1, channels 3, bps 2);
     PixelTypeDef!(pub const CMYK_HALF_FLT; float, color_space ColorSpace::Cmyk, channels 4, bps 2);
-    
     PixelTypeDef!(pub const ARGB_HALF_FLT; float, color_space ColorSpace::Rgb, extra 1, channels 3, bps 2, swap_first);
     PixelTypeDef!(pub const BGR_HALF_FLT; float, color_space ColorSpace::Rgb, channels 3, bps 2, do_swap);
     PixelTypeDef!(pub const BGRA_HALF_FLT; float, color_space ColorSpace::Rgb, extra 1, channels 3, bps 2, do_swap, swap_first);
