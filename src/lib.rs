@@ -147,6 +147,8 @@ pub struct TagEntry {
     pub size: u32,
 }
 
+pub const MAX_CHANNELS: u32 = 16;
+
 mod pixel_type;
 pub use pixel_type::PixelType;
 
