@@ -1,4 +1,5 @@
 use crate::plugin::*;
+use crate::signatures as s;
 use crate::*;
 use std::io::{Read, Result, Write};
 
@@ -38,29 +39,46 @@ pub const XYZ_HANDLER: &dyn TagTypeHandler<TagType = CIEXYZ> = &XyzHandler {};
 
 pub struct TagListItem(Signature, TagDescriptor);
 
+macro_rules! TagListItem {
+    ($signature: expr, $element_count:expr, $supported_types:expr) => {
+        TagListItem {
+            0: $signature,
+            1: TagDescriptor {
+                element_count: $element_count,
+                supported_types: &$supported_types,
+                decide_type: None,
+            },
+        }
+    };
+    ($signature: expr, $element_count:expr, $supported_types:expr, $decide_type:expr) => {
+        TagListItem {
+            0: $signature,
+            1: TagDescriptor {
+                element_count: $element_count,
+                supported_types: &$supported_types,
+                decide_type: Some($decide_type),
+            },
+        }
+    };
+}
+
 pub static SUPPORTED_TAGS: &[TagListItem] = &[
-    TagListItem {
-        0: signatures::tag::RED_COLORANT,
-        1: TagDescriptor {
-            element_count: 1,
-            supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: Some(decide_xyz_type),
-        },
-    },
-    TagListItem {
-        0: signatures::tag::GREEN_COLORANT,
-        1: TagDescriptor {
-            element_count: 1,
-            supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: Some(decide_xyz_type),
-        },
-    },
-    TagListItem {
-        0: signatures::tag::BLUE_COLORANT,
-        1: TagDescriptor {
-            element_count: 1,
-            supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: Some(decide_xyz_type),
-        },
-    },
+    TagListItem!(
+        s::tag::RED_COLORANT,
+        1,
+        [s::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
+        decide_xyz_type
+    ),
+    TagListItem!(
+        s::tag::GREEN_COLORANT,
+        1,
+        [s::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
+        decide_xyz_type
+    ),
+    TagListItem!(
+        s::tag::BLUE_COLORANT,
+        1,
+        [s::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
+        decide_xyz_type
+    ),
 ];
