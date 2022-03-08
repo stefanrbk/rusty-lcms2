@@ -3,17 +3,11 @@ use crate::plugin::*;
 use crate::signatures as s;
 use crate::*;
 use std::io::{Read, Result, Write};
+use paste::paste;
 
 // Some broken types
 const CORBIS_BROKEN_XYZ_TYPE: Signature = Signature::new(&[0x17, 0xA5, 0x05, 0xB8]);
 const MONACO_BROKEN_CURVE_TYPE: Signature = Signature::new(&[0x94, 0x78, 0xEE, 0x00]);
-
-pub const XyzHandler: TagTypeHandler = TagTypeHandler {
-    signature: todo!(),
-    version: todo!(),
-    read: xyz_read,
-    write: xyz_write,
-};
 
 fn xyz_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> Result<usize> {
     items.copy_from_slice(&read_xyz(reader)?);
@@ -24,9 +18,38 @@ fn xyz_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> 
 fn xyz_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
     write_xyz(writer, items.try_into().unwrap())
 }
+
 fn decide_xyz_type(_version: f64) -> Signature {
     signatures::tag_type::XYZ
 }
+
+macro_rules! type_handler {
+    ($sig: expr, $name: ident) => {
+        paste! {
+            TagTypeHandler { 
+                signature: $sig,
+                version: 0,
+                read: [<$name:lower _read>],
+                write: [<$name:lower _write>],
+            }
+        }
+    };
+    ($sig: expr, $name: ident, $version: expr) => {
+        paste! {
+            TagTypeHandler { 
+                signature: $sig,
+                version: $version,
+                read: [<$name:lower _read>],
+                write: [<$name:lower _write>],
+            }
+        }
+    };
+}
+
+pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
+    type_handler!(s::tag_type::XYZ, Xyz),
+    type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
+];
 
 /* ------------------------------------------- Tag support main routines -------------------------------------------- */
 
