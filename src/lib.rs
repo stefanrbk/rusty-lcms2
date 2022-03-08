@@ -206,6 +206,7 @@ impl CIEXYZ {
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIExyY {
     pub x: f64,
     pub y: f64,
@@ -214,6 +215,7 @@ pub struct CIExyY {
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIELab {
     pub L: f64,
     pub a: f64,
@@ -222,6 +224,7 @@ pub struct CIELab {
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIELCh {
     pub L: f64,
     pub C: f64,
@@ -230,6 +233,7 @@ pub struct CIELCh {
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIEJCh {
     pub J: f64,
     pub C: f64,
@@ -237,6 +241,7 @@ pub struct CIEJCh {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIEXYZTriple {
     pub red: CIEXYZ,
     pub green: CIEXYZ,
@@ -244,6 +249,7 @@ pub struct CIEXYZTriple {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIExyYTripple {
     pub red: CIExyY,
     pub green: CIExyY,
@@ -251,6 +257,7 @@ pub struct CIExyYTripple {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct ICCMeasurementConditions {
     pub observer: u32,
     pub backing: CIEXYZ,
@@ -260,6 +267,7 @@ pub struct ICCMeasurementConditions {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct ICCViewingConditions {
     pub illuminant_xyz: CIEXYZ,
     pub surround_xyz: CIEXYZ,
