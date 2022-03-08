@@ -44,7 +44,7 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
         1: TagDescriptor {
             element_count: 1,
             supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: decide_xyz_type,
+            decide_type: Some(decide_xyz_type),
         },
     },
     TagListItem {
@@ -52,7 +52,7 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
         1: TagDescriptor {
             element_count: 1,
             supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: decide_xyz_type,
+            decide_type: Some(decide_xyz_type),
         },
     },
     TagListItem {
@@ -60,7 +60,7 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
         1: TagDescriptor {
             element_count: 1,
             supported_types: &[signatures::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
-            decide_type: decide_xyz_type,
+            decide_type: Some(decide_xyz_type),
         },
     },
 ];
