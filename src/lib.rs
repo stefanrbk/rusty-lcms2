@@ -10,12 +10,17 @@ pub type U16F16 = u32;
 
 mod signature;
 pub use signature::Signature;
+use std::ops::Range;
 
 pub const USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
     true
 } else {
     false
 };
+
+pub mod as_u8 {
+    pub type CIEXYZ = [u8; 24];
+}
 
 /// D50 XYZ normalized to Y=1.0
 pub mod d50 {
@@ -89,9 +94,7 @@ impl std::fmt::Debug for ProfileID {
 }
 impl PartialEq for ProfileID {
     fn eq(&self, other: &Self) -> bool {
-        unsafe {
-            self.id8 == other.id8
-        }
+        unsafe { self.id8 == other.id8 }
     }
 }
 
@@ -189,10 +192,16 @@ pub enum ColorSpace {
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(C)]
 pub struct CIEXYZ {
     pub X: f64,
     pub Y: f64,
     pub Z: f64,
+}
+impl CIEXYZ {
+    pub const X: Range<usize> = Range { start: 0, end: 8 };
+    pub const Y: Range<usize> = Range { start: 8, end: 16 };
+    pub const Z: Range<usize> = Range { start: 16, end: 24 };
 }
 
 #[allow(non_snake_case)]
