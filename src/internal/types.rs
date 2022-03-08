@@ -15,7 +15,7 @@ fn xyz_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> 
     Ok(1)
 }
 
-fn xyz_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
+fn xyz_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
     write_xyz(writer, items.try_into().unwrap())
 }
 

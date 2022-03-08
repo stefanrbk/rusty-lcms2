@@ -4,7 +4,7 @@ use std::io::Result;
 use std::io::Write;
 use std::mem::size_of;
 
-use super::{eof_error, write_u32};
+use super::*;
 
 pub struct TagBase {
     pub signature: Signature,
@@ -29,13 +29,13 @@ impl TagBase {
         let mut buf = [0u8; size_of::<Signature>()];
         let len = reader.read(&mut buf)?;
         if len < size_of::<Signature>() {
-            return Err(eof_error());
+            return Err(Error::from(ErrorKind::UnexpectedEof));
         }
         let sig = Signature::new(&buf);
 
         let len = reader.read(&mut buf)?;
         if len < size_of::<Signature>() {
-            return Err(eof_error());
+            return Err(Error::from(ErrorKind::UnexpectedEof));
         }
 
         Ok(Self {
