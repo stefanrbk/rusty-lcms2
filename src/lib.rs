@@ -18,9 +18,7 @@ pub const USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
     false
 };
 
-pub mod as_u8 {
-    pub type CIEXYZ = [u8; 24];
-}
+pub mod as_u8;
 
 /// D50 XYZ normalized to Y=1.0
 pub mod d50 {
@@ -212,6 +210,12 @@ pub struct CIExyY {
     pub y: f64,
     pub Y: f64,
 }
+#[allow(non_upper_case_globals)]
+impl CIExyY {
+    pub const x: Range<usize> = Range { start: 0, end: 8 };
+    pub const y: Range<usize> = Range { start: 8, end: 16 };
+    pub const Y: Range<usize> = Range { start: 16, end: 24 };
+}
 
 #[allow(non_snake_case)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -254,6 +258,12 @@ pub struct CIExyYTripple {
     pub red: CIExyY,
     pub green: CIExyY,
     pub blue: CIExyY,
+}
+#[allow(non_upper_case_globals)]
+impl CIExyYTripple {
+    pub const red: Range<usize> = Range { start: 0, end: 24 };
+    pub const green: Range<usize> = Range { start: 24, end: 48 };
+    pub const blue: Range<usize> = Range { start: 48, end: 72 };
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
