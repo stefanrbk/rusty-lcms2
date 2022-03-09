@@ -1,42 +1,131 @@
-use std::convert::TryInto;
+use std::mem::size_of;
 use crate::plugin::*;
 use crate::signatures as s;
 use crate::*;
-use std::io::{Read, Result, Write};
 use paste::paste;
+use std::convert::TryInto;
+use std::io::*;
+use std::io::{Read, Result, Write};
 
 // Some broken types
 const CORBIS_BROKEN_XYZ_TYPE: Signature = Signature::new(&[0x17, 0xA5, 0x05, 0xB8]);
 const MONACO_BROKEN_CURVE_TYPE: Signature = Signature::new(&[0x94, 0x78, 0xEE, 0x00]);
 
 fn xyz_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> Result<usize> {
-    items.copy_from_slice(&read_xyz(reader)?);
+    items.copy_from_slice(&read_xyz_as_u8(reader)?);
 
     Ok(1)
 }
 
 fn xyz_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
-    write_xyz(writer, items.try_into().unwrap())
+    write_xyz_from_u8(writer, items.try_into().unwrap())
+}
+
+fn chromaticity_read(
+    reader: &mut dyn Read,
+    items: &mut [u8],
+    _only_reads_one: usize,
+) -> Result<usize> {
+    let num_channels = read_u16(reader)?;
+    if num_channels != 3 {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
+    let one = 1.0f64.to_be_bytes();
+
+    _ = read_u16(reader)?;
+
+    items[CIExyYTripple::red][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::red][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::red][CIExyY::Y].copy_from_slice(&one);
+
+    items[CIExyYTripple::green][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::green][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::green][CIExyY::Y].copy_from_slice(&one);
+
+    items[CIExyYTripple::blue][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::blue][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    items[CIExyYTripple::blue][CIExyY::Y].copy_from_slice(&one);
+
+    Ok(1)
+}
+
+fn chromaticity_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+    write_u16(writer, 3)?;
+    write_u16(writer, 0)?;
+
+    save_one_chromaticity(&items[CIExyYTripple::red], writer)?;
+    save_one_chromaticity(&items[CIExyYTripple::red], writer)?;
+    save_one_chromaticity(&items[CIExyYTripple::red], writer)?;
+
+    Ok(())
+}
+
+fn colorant_order_read(
+    reader: &mut dyn Read,
+    items: &mut [u8],
+    _only_reads_one: usize,
+) -> Result<usize> {
+    let count = read_u32(reader)? as usize;
+    if count > MAX_CHANNELS as usize || items.len() < count {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
+
+    // Set all values to 0xFF as that is the end of the data once writen to.
+    items.iter_mut().for_each(|x| *x = 0xFF);
+
+    match reader.read(&mut items[0..count])? {
+        len if len == size_of::<u8>() * count => Ok(1),
+        _ => Err(Error::from(ErrorKind::UnexpectedEof)),
+    }
+}
+
+fn colorant_order_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+    let mut count = 0;
+    for i in 0..items.len() {
+        if items[i] != 0xFF {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    if count > MAX_CHANNELS {
+        count = MAX_CHANNELS;
+    }
+
+    let items = &items[0..count as usize];
+
+    write_u32(writer, count)?;
+    match writer.write(items)? {
+        len if len == size_of::<u8>() * count as usize => Ok(()),
+        _ => Err(Error::from(ErrorKind::UnexpectedEof)),
+    }
 }
 
 fn decide_xyz_type(_version: f64) -> Signature {
     signatures::tag_type::XYZ
 }
 
+fn save_one_chromaticity(item: &[u8], writer: &mut dyn Write) -> Result<()> {
+    write_s15f16_from_u8(writer, item[CIExyY::x].try_into().unwrap())?;
+    write_s15f16_from_u8(writer, item[CIExyY::y].try_into().unwrap())?;
+
+    Ok(())
+}
+
 macro_rules! type_handler {
     ($sig: expr, $name: ident) => {
         paste! {
-            TagTypeHandler { 
+            TagTypeHandler {
                 signature: $sig,
                 version: 0,
-                read: [<$name:lower _read>],
-                write: [<$name:lower _write>],
+                read: [<$name:snake:lower _read>],
+                write: [<$name:snake:lower _write>],
             }
         }
     };
     ($sig: expr, $name: ident, $version: expr) => {
         paste! {
-            TagTypeHandler { 
+            TagTypeHandler {
                 signature: $sig,
                 version: $version,
                 read: [<$name:lower _read>],
@@ -47,6 +136,8 @@ macro_rules! type_handler {
 }
 
 pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
+    type_handler!(s::tag_type::CHROMATICITY, Chromaticity),
+    type_handler!(s::tag_type::COLORANT_ORDER, ColorantOrder),
     type_handler!(s::tag_type::XYZ, Xyz),
     type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
 ];
@@ -97,4 +188,6 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
         [s::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
         decide_xyz_type
     ),
+    TagListItem!(s::tag::CHROMATICITY, 1, [s::tag_type::CHROMATICITY]),
+    TagListItem!(s::tag::COLORANT_ORDER, 1, [s::tag_type::COLORANT_ORDER]),
 ];
