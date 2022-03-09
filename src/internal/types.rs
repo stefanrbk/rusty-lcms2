@@ -101,6 +101,52 @@ fn colorant_order_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: 
     }
 }
 
+fn s15_f16_read(reader: &mut dyn Read, items: &mut [u8], length_in_bytes: usize) -> Result<usize> {
+    let n = length_in_bytes / size_of::<u32>();
+
+    for i in 0..n {
+        items[(i*size_of::<u32>())..][..8].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    }
+
+    Ok(n)
+}
+
+fn s15_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
+    for i in 0..count {
+        write_s15f16_from_u8(writer, items[(i*size_of::<u32>())..][..8].try_into().unwrap())?;
+    }
+
+    Ok(())
+}
+
+fn u16_f16_read(reader: &mut dyn Read, items: &mut [u8], length_in_bytes: usize) -> Result<usize> {
+    let n = length_in_bytes / size_of::<u32>();
+
+    for i in 0..n {
+        let value = (read_u32(reader)?) as f64 / 65536.0;
+        items[(i*size_of::<u32>())..][..8].copy_from_slice(&value.to_be_bytes());
+    }
+
+    Ok(n)
+}
+
+fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
+    for i in 0..count {
+        // Get the 8 bytes for the f64 value.
+        let value = &items[(i*size_of::<f64>())..][..size_of::<f64>()];
+
+        // Convert [u8; 8] form into f64
+        let value = f64::from_be_bytes(value.try_into().unwrap());
+
+        // Convert to U16F16
+        let value = (value * 65536.0 + 0.5).floor() as U16F16;
+
+        write_u32(writer, value)?;
+    }
+
+    Ok(())
+}
+
 fn decide_xyz_type(_version: f64) -> Signature {
     signatures::tag_type::XYZ
 }
@@ -138,6 +184,8 @@ macro_rules! type_handler {
 pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
     type_handler!(s::tag_type::CHROMATICITY, Chromaticity),
     type_handler!(s::tag_type::COLORANT_ORDER, ColorantOrder),
+    type_handler!(s::tag_type::S15_FIXED16_ARRAY, S15F16),
+    type_handler!(s::tag_type::U16_FIXED16_ARRAY, U16F16),
     type_handler!(s::tag_type::XYZ, Xyz),
     type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
 ];
@@ -188,6 +236,8 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
         [s::tag_type::XYZ, CORBIS_BROKEN_XYZ_TYPE],
         decide_xyz_type
     ),
+    TagListItem!(s::tag::CHROMATIC_ADAPTATION, 9, [s::tag_type::S15_FIXED16_ARRAY]),
     TagListItem!(s::tag::CHROMATICITY, 1, [s::tag_type::CHROMATICITY]),
     TagListItem!(s::tag::COLORANT_ORDER, 1, [s::tag_type::COLORANT_ORDER]),
+    TagListItem!(s::tag::ARGYLL_ARTS, 9, [s::tag_type::S15_FIXED16_ARRAY]),
 ];
