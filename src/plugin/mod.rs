@@ -97,7 +97,7 @@ pub fn read_u64(reader: &mut dyn Read) -> Result<u64> {
     }
 }
 
-pub fn read_s15f16(reader: &mut dyn Read) -> Result<[u8; 8]> {
+pub fn read_s15f16_as_u8(reader: &mut dyn Read) -> Result<[u8; 8]> {
     let mut buf = [0u8; size_of::<S15F16>()];
     match reader.read(&mut buf)? {
         len if len == size_of::<S15F16>() => Ok(s15f16_to_f64(S15F16::from_be_bytes(buf)).to_be_bytes()),
@@ -113,12 +113,12 @@ pub fn read_f64(reader: &mut dyn Read) -> Result<f64> {
     }
 }
 
-pub fn read_xyz(reader: &mut dyn Read) -> Result<as_u8::CIEXYZ> {
+pub fn read_xyz_as_u8(reader: &mut dyn Read) -> Result<as_u8::CIEXYZ> {
     let mut buf = [0u8; 24];
 
-    buf[CIEXYZ::X].copy_from_slice(&read_s15f16(reader)?);
-    buf[CIEXYZ::Y].copy_from_slice(&read_s15f16(reader)?);
-    buf[CIEXYZ::Z].copy_from_slice(&read_s15f16(reader)?);
+    buf[CIEXYZ::X].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    buf[CIEXYZ::Y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    buf[CIEXYZ::Z].copy_from_slice(&read_s15f16_as_u8(reader)?);
 
     Ok(buf)
 }
@@ -171,7 +171,7 @@ pub fn write_u64(writer: &mut dyn Write, value: u64) -> Result<()> {
     }
 }
 
-pub fn write_s15f16(writer: &mut dyn Write, value: [u8; 8]) -> Result<()> {
+pub fn write_s15f16_from_u8(writer: &mut dyn Write, value: as_u8::f64) -> Result<()> {
     let value = f64_to_s15f16(f64::from_be_bytes(value));
     let buf = S15F16::to_be_bytes(value);
     match writer.write(&buf)? {
@@ -180,10 +180,10 @@ pub fn write_s15f16(writer: &mut dyn Write, value: [u8; 8]) -> Result<()> {
     }
 }
 
-pub fn write_xyz(writer: &mut dyn Write, value: as_u8::CIEXYZ) -> Result<()> {
-    write_s15f16(writer, value[CIEXYZ::X].try_into().unwrap())?;
-    write_s15f16(writer, value[CIEXYZ::Y].try_into().unwrap())?;
-    write_s15f16(writer, value[CIEXYZ::Z].try_into().unwrap())?;
+pub fn write_xyz_from_u8(writer: &mut dyn Write, value: as_u8::CIEXYZ) -> Result<()> {
+    write_s15f16_from_u8(writer, value[CIEXYZ::X].try_into().unwrap())?;
+    write_s15f16_from_u8(writer, value[CIEXYZ::Y].try_into().unwrap())?;
+    write_s15f16_from_u8(writer, value[CIEXYZ::Z].try_into().unwrap())?;
 
     Ok(())
 }
