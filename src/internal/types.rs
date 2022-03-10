@@ -147,6 +147,16 @@ fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
     Ok(())
 }
 
+fn signature_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> Result<usize> {
+    items.copy_from_slice(&read_u32_as_u8(reader)?);
+
+    Ok(1)
+}
+
+fn signature_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+    write_u32_from_u8(writer, items.try_into().unwrap())
+}
+
 fn decide_xyz_type(_version: f64) -> Signature {
     signatures::tag_type::XYZ
 }
@@ -186,6 +196,7 @@ pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
     type_handler!(s::tag_type::COLORANT_ORDER, ColorantOrder),
     type_handler!(s::tag_type::S15_FIXED16_ARRAY, S15F16),
     type_handler!(s::tag_type::U16_FIXED16_ARRAY, U16F16),
+    type_handler!(s::tag_type::SIGNATURE, Signature),
     type_handler!(s::tag_type::XYZ, Xyz),
     type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
 ];
@@ -239,5 +250,9 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
     TagListItem!(s::tag::CHROMATIC_ADAPTATION, 9, [s::tag_type::S15_FIXED16_ARRAY]),
     TagListItem!(s::tag::CHROMATICITY, 1, [s::tag_type::CHROMATICITY]),
     TagListItem!(s::tag::COLORANT_ORDER, 1, [s::tag_type::COLORANT_ORDER]),
+    TagListItem!(s::tag::TECHNOLOGY, 1, [s::tag_type::SIGNATURE]),
+    TagListItem!(s::tag::COLORIMETRIC_INTENT_IMAGE_STATE, 1, [s::tag_type::SIGNATURE]),
+    TagListItem!(s::tag::PERCEPTUAL_RENDERING_INTENT_GAMUT, 1, [s::tag_type::SIGNATURE]),
+    TagListItem!(s::tag::SATURATION_RENDERING_INTENT_GAMUT, 1, [s::tag_type::SIGNATURE]),
     TagListItem!(s::tag::ARGYLL_ARTS, 9, [s::tag_type::S15_FIXED16_ARRAY]),
 ];

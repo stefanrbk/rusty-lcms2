@@ -74,9 +74,13 @@ pub fn read_u16_array(reader: &mut dyn Read, result: &mut [u16]) -> Result<()> {
 }
 
 pub fn read_u32(reader: &mut dyn Read) -> Result<u32> {
+    Ok(u32::from_be_bytes(read_u32_as_u8(reader)?))
+}
+
+pub fn read_u32_as_u8(reader: &mut dyn Read) -> Result<as_u8::u32> {
     let mut buf = [0u8; size_of::<u32>()];
     match reader.read(&mut buf)? {
-        len if len == size_of::<u32>() => Ok(u32::from_be_bytes(buf)),
+        len if len == size_of::<u32>() => Ok(buf),
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }
 }
@@ -148,8 +152,11 @@ pub fn write_u16_array(writer: &mut dyn Write, value: &[u16]) -> Result<()> {
 }
 
 pub fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
-    let buf = u32::to_be_bytes(value);
-    match writer.write(&buf)? {
+    write_u32_from_u8(writer, u32::to_be_bytes(value))
+}
+
+pub fn write_u32_from_u8(writer: &mut dyn Write, value: as_u8::u32) -> Result<()> {
+    match writer.write(&value)? {
         len if len == size_of::<u32>() => Ok(()),
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }

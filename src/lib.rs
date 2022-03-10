@@ -321,3 +321,6 @@ pub struct CurveSegment {
 
 mod internal;
 pub mod plugin;
+
+// #[cfg(test)]
+// mod tests;
