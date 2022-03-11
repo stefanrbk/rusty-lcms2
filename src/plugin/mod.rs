@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use std::io::*;
 use std::convert::TryInto;
 use std::mem::size_of;
@@ -229,6 +230,12 @@ pub fn f64_to_s15f16(v: f64) -> S15F16 {
     f64::floor(v * 65536.0 + 0.5) as S15F16
 }
 
+/* ---------------------------------------------------- Context ----------------------------------------------------- */
+
+pub struct Context {
+    pub tag_plugin: Vec<TagPluginChunk>
+}
+
 pub struct PluginBase<'a> {
     pub magic: Signature,
     pub expected_version: u32,
@@ -236,9 +243,15 @@ pub struct PluginBase<'a> {
     pub next: &'a PluginBase<'a>,
 }
 
+pub struct PluginTag<'a> {
+    pub base: PluginBase<'a>,
+    pub signature: Signature,
+    pub descriptor: TagDescriptor,
+}
+
 pub const MAX_TYPES_IN_LCMS_PLUGIN: u8 = 20;
 
-/* ---------------------------------------------------- Tag type ---------------------------------------------------- */
+/* ---------------------------------------------------- Tag Type ---------------------------------------------------- */
 
 pub type TagTypeRead = fn(&mut dyn Read, items: &mut [u8], tag_size: usize) -> Result<usize>;
 pub type TagTypeWrite = fn(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()>;
@@ -253,6 +266,35 @@ pub struct TagTypeHandler {
 
 /* ------------------------------------------------------ Tags ------------------------------------------------------ */
 
+pub struct TagListItem {
+    pub sig: Signature, 
+    pub desc: TagDescriptor,
+}
+
+#[macro_export]
+macro_rules! TagListItem {
+    ($signature: expr, $element_count:expr, $supported_types:expr) => {
+        TagListItem {
+            sig: $signature,
+            desc: TagDescriptor {
+                element_count: $element_count,
+                supported_types: &$supported_types,
+                decide_type: None,
+            },
+        }
+    };
+    ($signature: expr, $element_count:expr, $supported_types:expr, $decide_type:expr) => {
+        TagListItem {
+            sig: $signature,
+            desc: TagDescriptor {
+                element_count: $element_count,
+                supported_types: &$supported_types,
+                decide_type: Some($decide_type),
+            },
+        }
+    };
+}
+
 pub type DecideType = fn(f64, &[i8]) -> Signature;
 
 pub struct TagDescriptor {
@@ -264,10 +306,8 @@ pub struct TagDescriptor {
     pub decide_type: Option<DecideType>,
 }
 
-pub struct PluginTag<'a> {
-    pub base: PluginBase<'a>,
-    pub signature: Signature,
-    pub descriptor: TagDescriptor,
+pub struct TagPluginChunk {
+    pub tag: &'static [TagListItem]
 }
 
 /* ------------------------------------------------- Full Transform ------------------------------------------------- */

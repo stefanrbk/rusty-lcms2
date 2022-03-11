@@ -313,31 +313,6 @@ pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
 
 /* ------------------------------------------- Tag support main routines -------------------------------------------- */
 
-pub struct TagListItem(Signature, TagDescriptor);
-
-macro_rules! TagListItem {
-    ($signature: expr, $element_count:expr, $supported_types:expr) => {
-        TagListItem {
-            0: $signature,
-            1: TagDescriptor {
-                element_count: $element_count,
-                supported_types: &$supported_types,
-                decide_type: None,
-            },
-        }
-    };
-    ($signature: expr, $element_count:expr, $supported_types:expr, $decide_type:expr) => {
-        TagListItem {
-            0: $signature,
-            1: TagDescriptor {
-                element_count: $element_count,
-                supported_types: &$supported_types,
-                decide_type: Some($decide_type),
-            },
-        }
-    };
-}
-
 pub static SUPPORTED_TAGS: &[TagListItem] = &[
     TagListItem!(
         s::tag::A_TO_B0,
@@ -656,3 +631,9 @@ pub static SUPPORTED_TAGS: &[TagListItem] = &[
     TagListItem!(s::tag::PROFILE_DESCRIPTION_ML, 9, [s::tag_type::MULTI_LOCALIZED_UNICODE]),
     TagListItem!(s::tag::ARGYLL_ARTS, 9, [s::tag_type::S15_FIXED16_ARRAY]),
 ];
+
+// pub fn register_tag_plugin(plugin: Option<PluginTag>) -> Result<()> {
+//     match plugin {
+//         None => 
+//     }
+// }
