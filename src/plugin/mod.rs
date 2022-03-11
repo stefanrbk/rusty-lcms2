@@ -253,7 +253,7 @@ pub struct TagTypeHandler {
 
 /* ------------------------------------------------------ Tags ------------------------------------------------------ */
 
-pub type DecideType = fn(f64) -> Signature;
+pub type DecideType = fn(f64, &[i8]) -> Signature;
 
 pub struct TagDescriptor {
     /// If this tag needs to be an array, how many elements should keep
