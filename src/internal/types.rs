@@ -232,6 +232,7 @@ pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
     type_handler!(s::tag_type::COLORANT_ORDER, ColorantOrder),
     type_handler!(s::tag_type::S15_FIXED16_ARRAY, S15F16),
     type_handler!(s::tag_type::U16_FIXED16_ARRAY, U16F16),
+    type_handler!(s::tag_type::TEXT, Text),
     type_handler!(s::tag_type::SIGNATURE, Signature),
     type_handler!(s::tag_type::XYZ, Xyz),
     type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
