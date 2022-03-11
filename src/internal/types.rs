@@ -157,8 +157,44 @@ fn signature_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize
     write_u32_from_u8(writer, items.try_into().unwrap())
 }
 
+fn text_read(reader: &mut dyn Read, items: &mut [u8], tag_size: usize) -> Result<usize> {
+    if items.len() <= tag_size { return Err(Error::from(ErrorKind::InvalidData)); }
+
+    reader.read(&mut items[..tag_size])?;
+    items[tag_size] = 0; // zero-terminated strings
+
+    // verify we are still in ASCII land
+    for i in items[..tag_size].iter() {
+        if *i > 127 { return Err(Error::from(ErrorKind::InvalidData)); }
+    }
+
+    Ok(1)
+}
+
+fn text_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+
+    // verify we are still in ASCII land
+    for i in items.iter() {
+        if *i > 127 { return Err(Error::from(ErrorKind::InvalidData)); }
+    }
+
+    writer.write(items)?;
+
+    // and that the last byte is 0
+    if items[items.len() - 1] != 0 { writer.write(&[0u8])?; }
+    
+    Ok(())
+}
+
 fn decide_xyz_type(_version: f64) -> Signature {
     signatures::tag_type::XYZ
+}
+
+fn decide_text_type(version: f64) -> Signature {
+    match version {
+        _v if _v >= 4.0 => s::tag_type::MULTI_LOCALIZED_UNICODE,
+        _ => s::tag_type::TEXT,
+    }
 }
 
 fn save_one_chromaticity(item: &[u8], writer: &mut dyn Write) -> Result<()> {
