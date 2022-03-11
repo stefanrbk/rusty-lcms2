@@ -1,21 +1,29 @@
-use std::sync::Mutex;
-use std::io::*;
+#![macro_use]
+
+use std::sync::Arc;
+use crate::plugin::tags::*;
 use std::convert::TryInto;
+use std::io::*;
 use std::mem::size_of;
 
 use crate::*;
 
-mod vec3;
-
-mod mat3;
-
 /// ICC base tag
+mod big_endian;
+mod chunks;
+mod context;
+mod error;
+mod little_endian;
+mod mat3;
 mod tag_base;
+mod tags;
+mod vec3;
 
 #[cfg(test)]
 mod tests;
 
 // Public exports
+pub use context::Context;
 pub use mat3::Mat3;
 pub use tag_base::TagBase;
 pub use vec3::Vec3;
@@ -24,31 +32,18 @@ pub use vec3::Vec3;
 // const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
 
 #[cfg(CMS_USE_BIG_ENDIAN)]
-pub fn adjust_endianness_16(word: u16) -> u16 {
-    word
-}
-#[cfg(not(CMS_USE_BIG_ENDIAN))]
-pub fn adjust_endianness_16(word: u16) -> u16 {
-    u16::from_be_bytes(word.to_le_bytes())
-}
-
+pub use big_endian::adjust_endianness_16;
 #[cfg(CMS_USE_BIG_ENDIAN)]
-pub fn adjust_endianness_32(dword: u32) -> u32 {
-    dword
-}
-#[cfg(not(CMS_USE_BIG_ENDIAN))]
-pub fn adjust_endianness_32(dword: u32) -> u32 {
-    u32::from_be_bytes(dword.to_le_bytes())
-}
-
+pub use big_endian::adjust_endianness_32;
 #[cfg(CMS_USE_BIG_ENDIAN)]
-pub fn adjust_endianness_64(qword: u64) -> u64 {
-    qword
-}
+pub use big_endian::adjust_endianness_64;
+
 #[cfg(not(CMS_USE_BIG_ENDIAN))]
-pub fn adjust_endianness_64(qword: u64) -> u64 {
-    u64::from_be_bytes(qword.to_le_bytes())
-}
+pub use little_endian::adjust_endianness_16;
+#[cfg(not(CMS_USE_BIG_ENDIAN))]
+pub use little_endian::adjust_endianness_32;
+#[cfg(not(CMS_USE_BIG_ENDIAN))]
+pub use little_endian::adjust_endianness_64;
 
 pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
     let mut buf = [0u8; size_of::<u8>()];
@@ -105,7 +100,9 @@ pub fn read_u64(reader: &mut dyn Read) -> Result<u64> {
 pub fn read_s15f16_as_u8(reader: &mut dyn Read) -> Result<[u8; 8]> {
     let mut buf = [0u8; size_of::<S15F16>()];
     match reader.read(&mut buf)? {
-        len if len == size_of::<S15F16>() => Ok(s15f16_to_f64(S15F16::from_be_bytes(buf)).to_be_bytes()),
+        len if len == size_of::<S15F16>() => {
+            Ok(s15f16_to_f64(S15F16::from_be_bytes(buf)).to_be_bytes())
+        }
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }
 }
@@ -232,19 +229,15 @@ pub fn f64_to_s15f16(v: f64) -> S15F16 {
 
 /* ---------------------------------------------------- Context ----------------------------------------------------- */
 
-pub struct Context {
-    pub tag_plugin: Vec<TagPluginChunk>
-}
-
-pub struct PluginBase<'a> {
+pub struct PluginBase {
     pub magic: Signature,
     pub expected_version: u32,
     pub r#type: Signature,
-    pub next: &'a PluginBase<'a>,
+    pub next: Arc<Option<PluginBase>>,
 }
 
-pub struct PluginTag<'a> {
-    pub base: PluginBase<'a>,
+pub struct PluginTag {
+    pub base: PluginBase,
     pub signature: Signature,
     pub descriptor: TagDescriptor,
 }
@@ -266,10 +259,8 @@ pub struct TagTypeHandler {
 
 /* ------------------------------------------------------ Tags ------------------------------------------------------ */
 
-pub struct TagListItem {
-    pub sig: Signature, 
-    pub desc: TagDescriptor,
-}
+pub use tags::TagListItem;
+pub use tags::TagDescriptor;
 
 #[macro_export]
 macro_rules! TagListItem {
@@ -296,19 +287,6 @@ macro_rules! TagListItem {
 }
 
 pub type DecideType = fn(f64, &[i8]) -> Signature;
-
-pub struct TagDescriptor {
-    /// If this tag needs to be an array, how many elements should keep
-    pub element_count: u32,
-
-    pub supported_types: &'static [Signature],
-
-    pub decide_type: Option<DecideType>,
-}
-
-pub struct TagPluginChunk {
-    pub tag: &'static [TagListItem]
-}
 
 /* ------------------------------------------------- Full Transform ------------------------------------------------- */
 

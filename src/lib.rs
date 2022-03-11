@@ -318,9 +318,9 @@ pub struct CurveSegment {
     pub n_grid_points: u32,
     pub sampled_points: [f32],
 }
+pub mod plugin;
 
 mod internal;
-pub mod plugin;
 
 // #[cfg(test)]
 // mod tests;
