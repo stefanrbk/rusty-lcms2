@@ -2,9 +2,11 @@ use crate::plugin::error::*;
 use crate::plugin::*;
 use crate::Signature;
 
+#[derive(Copy, Clone)]
 pub struct LogErrorChunk {
     pub handler: LogErrorHandlerFunction,
 }
+
 impl LogErrorChunk {
     pub fn new(func: Option<LogErrorHandlerFunction>) -> Self {
         Self {
@@ -13,6 +15,7 @@ impl LogErrorChunk {
     }
 }
 
+#[derive(Clone)]
 pub struct TagPluginChunk {
     pub tag: Vec<TagListItem>,
 }

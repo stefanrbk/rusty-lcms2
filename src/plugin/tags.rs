@@ -1,5 +1,6 @@
 use crate::plugin::*;
 
+#[derive(Copy, Clone)]
 pub struct TagListItem {
     pub sig: Signature,
     pub desc: TagDescriptor,
