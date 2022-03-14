@@ -1,3 +1,4 @@
+//! Base ICC tag definitions
 use crate::Signature;
 
 pub const A_TO_B0: Signature = Signature::new(b"A2B0");
@@ -41,6 +42,7 @@ pub const LUMINANCE: Signature = Signature::new(b"lumi");
 pub const MEASUREMENT: Signature = Signature::new(b"meas");
 pub const MEDIA_BLACK_POINT: Signature = Signature::new(b"bkpt");
 pub const MEDIA_WHITE_POINT: Signature = Signature::new(b"wtpt");
+#[deprecated]
 pub const NAMED_COLOR: Signature = Signature::new(b"ncol");
 pub const NAMED_COLOR2: Signature = Signature::new(b"ncl2");
 pub const OUTPUT_RESPONSE: Signature = Signature::new(b"resp");

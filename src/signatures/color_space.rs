@@ -1,3 +1,4 @@
+//! ICC Color spaces
 use crate::Signature;
 
 pub const XYZ: Signature = Signature::new(b"XYZ ");

@@ -1,3 +1,4 @@
+//! ICC Technology tag
 use crate::Signature;
 
 pub const DIGITAL_CAMERA: Signature = Signature::new(b"dcam");

@@ -1,3 +1,4 @@
+//! ICC Profile Class
 use crate::Signature;
 
 pub const INPUT: Signature = Signature::new(b"scnr");

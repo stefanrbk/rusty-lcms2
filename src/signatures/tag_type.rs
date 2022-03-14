@@ -1,3 +1,4 @@
+//! Base ICC type definitions
 use crate::Signature;
 
 pub const CHROMATICITY: Signature = Signature::new(b"chrm");
@@ -16,6 +17,7 @@ pub const LUTB_TO_A: Signature = Signature::new(b"mBA ");
 pub const MEASUREMENT: Signature = Signature::new(b"meas");
 pub const MULTI_LOCALIZED_UNICODE: Signature = Signature::new(b"mluc");
 pub const MULTI_PROCESS_ELEMENT: Signature = Signature::new(b"mpet");
+#[deprecated]
 pub const NAMED_COLOR: Signature = Signature::new(b"ncol");
 pub const NAMED_COLOR2: Signature = Signature::new(b"ncl2");
 pub const PARAMETRIC_CURVE: Signature = Signature::new(b"para");
