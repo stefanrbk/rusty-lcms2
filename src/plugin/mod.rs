@@ -1,14 +1,12 @@
 #![macro_use]
 
-use std::sync::Arc;
-use crate::plugin::tags::*;
 use std::convert::TryInto;
 use std::io::*;
 use std::mem::size_of;
+use std::sync::Arc;
 
 use crate::*;
 
-/// ICC base tag
 mod big_endian;
 mod chunks;
 mod context;
@@ -28,9 +26,6 @@ pub use mat3::Mat3;
 pub use tag_base::TagBase;
 pub use vec3::Vec3;
 
-// const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
-// const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
-
 #[cfg(CMS_USE_BIG_ENDIAN)]
 pub use big_endian::adjust_endianness_16;
 #[cfg(CMS_USE_BIG_ENDIAN)]
@@ -44,6 +39,9 @@ pub use little_endian::adjust_endianness_16;
 pub use little_endian::adjust_endianness_32;
 #[cfg(not(CMS_USE_BIG_ENDIAN))]
 pub use little_endian::adjust_endianness_64;
+
+// const READ_ADJUST_ENDIANNESS_U32: &dyn Fn([u8; 4]) -> u32 = if CMS_USE_BIG_ENDIAN {&u32::from_be_bytes} else {&u32::from_le_bytes};
+// const WRITE_ADJUST_ENDIANNESS_U32: &dyn Fn(u32) -> [u8; 4] = if CMS_USE_BIG_ENDIAN {&u32::to_be_bytes} else {&u32::to_le_bytes};
 
 pub fn read_u8(reader: &mut dyn Read) -> Result<u8> {
     let mut buf = [0u8; size_of::<u8>()];
@@ -229,20 +227,19 @@ pub fn f64_to_s15f16(v: f64) -> S15F16 {
 
 /* ---------------------------------------------------- Context ----------------------------------------------------- */
 
-pub struct PluginBase {
+pub struct Plugin {
     pub magic: Signature,
     pub expected_version: u32,
     pub r#type: Signature,
-    pub next: Arc<Option<PluginBase>>,
-}
-
-pub struct PluginTag {
-    pub base: PluginBase,
-    pub signature: Signature,
-    pub descriptor: TagDescriptor,
+    pub next: Option<Arc<Plugin>>,
+    pub data: PluginType,
 }
 
 pub const MAX_TYPES_IN_LCMS_PLUGIN: u8 = 20;
+
+pub enum PluginType {
+    Tag{ sig: Signature, desc: TagDescriptor },
+}
 
 /* ---------------------------------------------------- Tag Type ---------------------------------------------------- */
 
@@ -259,8 +256,8 @@ pub struct TagTypeHandler {
 
 /* ------------------------------------------------------ Tags ------------------------------------------------------ */
 
-pub use tags::TagListItem;
 pub use tags::TagDescriptor;
+pub use tags::TagListItem;
 
 #[macro_export]
 macro_rules! TagListItem {
