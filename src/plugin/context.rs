@@ -3,13 +3,13 @@ use crate::plugin::error::*;
 use crate::plugin::*;
 use std::sync::*;
 
-pub struct Context<'a> {
-    user_data: Arc<Mutex<Option<&'a [u8]>>>,
-    error_handler: Arc<Mutex<LogErrorChunk>>,
-    tag_plugin: Arc<Mutex<TagPluginChunk>>,
+pub struct Context {
+    user_data: Arc<Mutex<Option<Box<[u8]>>>>,
+    error_handler: Arc<Mutex<Box<LogErrorChunk>>>,
+    tag_plugin: Arc<Mutex<Box<TagPluginChunk>>>,
 }
 
-impl Context<'_> {
+impl Context {
     // pub fn new(plugin: Plugin, data: Option<&'_ [u8]>) -> Self {
     //     Context {
     //         user_data: Arc::new(Mutex::new(data)),
@@ -32,7 +32,7 @@ impl Context<'_> {
                     format!(
                         "plugin needs Little CMS {}, current version is {}",
                         plugin.expected_version, LCMS_VERSION
-                    ),
+                    ).as_str(),
                 );
                 return false;
             }
@@ -61,18 +61,18 @@ impl Context<'_> {
                 chunk.tag = Vec::new();
                 return true;
             }
-            Some(p) => match p.data {
+            Some(p) => match &p.data {
                 PluginType::Tag { sig, desc } => {
                     chunk.tag.push(TagListItem {
-                        sig: sig,
-                        desc: desc,
+                        sig: *sig,
+                        desc: *desc,
                     });
                     return true;
                 }
             },
         }
     }
-    pub fn get_log_error_chunk(&self) -> MutexGuard<LogErrorChunk> {
+    pub fn get_log_error_chunk(&self) -> MutexGuard<Box<LogErrorChunk>> {
         self.error_handler.lock().unwrap()
     }
     pub fn set_log_error_handler(&mut self, func: Option<LogErrorHandlerFunction>) {
@@ -81,7 +81,7 @@ impl Context<'_> {
             None => default_log_error_handler_function,
         }
     }
-    pub fn get_tag_plugin_chunk(&self) -> MutexGuard<TagPluginChunk> {
+    pub fn get_tag_plugin_chunk(&self) -> MutexGuard<Box<TagPluginChunk>> {
         self.tag_plugin.lock().unwrap()
     }
 }

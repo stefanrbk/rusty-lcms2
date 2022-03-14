@@ -11,6 +11,7 @@ impl TagListItem {
     };
 }
 
+#[derive(Copy, Clone)]
 pub struct TagDescriptor {
     /// If this tag needs to be an array, how many elements should keep
     pub element_count: u32,

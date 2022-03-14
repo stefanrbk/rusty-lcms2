@@ -6,7 +6,7 @@ pub struct LogErrorChunk {
     pub handler: LogErrorHandlerFunction,
 }
 impl LogErrorChunk {
-    pub const fn new(func: Option<LogErrorHandlerFunction>) -> Self {
+    pub fn new(func: Option<LogErrorHandlerFunction>) -> Self {
         Self {
             handler: func.unwrap_or(default_log_error_handler_function),
         }
