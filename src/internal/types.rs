@@ -9,13 +9,23 @@ use std::io::{Read, Result, Write};
 use std::mem::size_of;
 
 fn xyz_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
-    let value = read_xyz_as_u8(reader)?;
+    let value = read_xyz(reader)?;
 
-    Ok((1, Box::new(value)))
+    let mut buf = [0u8; size_of::<CIEXYZ>()];
+    buf[CIEXYZ::X].copy_from_slice(&value.X.to_ne_bytes());
+    buf[CIEXYZ::Y].copy_from_slice(&value.Y.to_ne_bytes());
+    buf[CIEXYZ::Z].copy_from_slice(&value.Z.to_ne_bytes());
+
+    Ok((1, Box::new(buf)))
 }
 
 fn xyz_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
-    write_xyz_from_u8(writer, items.try_into().unwrap())
+    let value = CIEXYZ { 
+        X: f64::from_ne_bytes(items[CIEXYZ::X].try_into().unwrap()),
+        Y: f64::from_ne_bytes(items[CIEXYZ::Y].try_into().unwrap()),
+        Z: f64::from_ne_bytes(items[CIEXYZ::Z].try_into().unwrap()),
+    };
+    write_xyz(writer, value)
 }
 
 fn chromaticity_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
@@ -23,22 +33,22 @@ fn chromaticity_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(u
     if num_channels != 3 {
         return Err(Error::from(ErrorKind::InvalidData));
     }
-    let one = 1.0f64.to_be_bytes();
+    let one = 1.0f64.to_ne_bytes();
 
     _ = read_u16(reader)?;
 
     let mut result = [0u8; 72];
 
-    result[CIExyYTripple::red][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    result[CIExyYTripple::red][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::red][CIExyY::x].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
+    result[CIExyYTripple::red][CIExyY::y].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
     result[CIExyYTripple::red][CIExyY::Y].copy_from_slice(&one);
 
-    result[CIExyYTripple::green][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    result[CIExyYTripple::green][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::green][CIExyY::x].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
+    result[CIExyYTripple::green][CIExyY::y].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
     result[CIExyYTripple::green][CIExyY::Y].copy_from_slice(&one);
 
-    result[CIExyYTripple::blue][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    result[CIExyYTripple::blue][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::blue][CIExyY::x].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
+    result[CIExyYTripple::blue][CIExyY::y].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
     result[CIExyYTripple::blue][CIExyY::Y].copy_from_slice(&one);
 
     Ok((1, Box::new(result)))
@@ -101,11 +111,12 @@ fn colorant_order_write(
 }
 
 fn s15_f16_read(reader: &mut dyn Read, length_in_bytes: usize) -> Result<(usize, Box<[u8]>)> {
-    let n = length_in_bytes / size_of::<u32>();
+    const SIZE_U32: usize = size_of::<u32>();
+    let n = length_in_bytes / SIZE_U32;
     let mut value = vec![0u8; n];
 
     for i in 0..n {
-        value[(i * size_of::<u32>())..][..8].copy_from_slice(&read_s15f16_as_u8(reader)?);
+        value[(i * SIZE_U32)..][..8].copy_from_slice(&read_s15f16(reader)?.to_ne_bytes());
     }
 
     Ok((n, value.into_boxed_slice()))
@@ -113,9 +124,9 @@ fn s15_f16_read(reader: &mut dyn Read, length_in_bytes: usize) -> Result<(usize,
 
 fn s15_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
     for i in 0..count {
-        write_s15f16_from_u8(
+        write_s15f16(
             writer,
-            items[(i * size_of::<u32>())..][..8].try_into().unwrap(),
+            f64::from_ne_bytes(items[(i * size_of::<u32>())..][..8].try_into().unwrap()),
         )?;
     }
 
@@ -123,12 +134,13 @@ fn s15_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
 }
 
 fn u16_f16_read(reader: &mut dyn Read, length_in_bytes: usize) -> Result<(usize, Box<[u8]>)> {
-    let n = length_in_bytes / size_of::<u32>();
+    const SIZE_U32: usize = size_of::<u32>();
+    let n = length_in_bytes / SIZE_U32;
     let mut result = vec![0u8; n];
 
     for i in 0..n {
         let value = (read_u32(reader)?) as f64 / 65536.0;
-        result[(i * size_of::<u32>())..][..8].copy_from_slice(&value.to_be_bytes());
+        result[(i * SIZE_U32)..][..8].copy_from_slice(&value.to_ne_bytes());
     }
 
     Ok((n, result.into_boxed_slice()))
@@ -140,7 +152,7 @@ fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
         let value = &items[(i * size_of::<f64>())..][..size_of::<f64>()];
 
         // Convert [u8; 8] form into f64
-        let value = f64::from_be_bytes(value.try_into().unwrap());
+        let value = f64::from_ne_bytes(value.try_into().unwrap());
 
         // Convert to U16F16
         let value = (value * 65536.0 + 0.5).floor() as U16F16;
@@ -152,13 +164,14 @@ fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
 }
 
 fn signature_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
-    let result = read_u32_as_u8(reader)?;
+    let result = read_u32(reader)?;
 
-    Ok((1, Box::new(result)))
+    Ok((1, Box::new(result.to_ne_bytes())))
 }
 
 fn signature_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
-    write_u32_from_u8(writer, items.try_into().unwrap())
+    let items = &items[..size_of::<u32>()];
+    write_u32(writer, u32::from_ne_bytes(items.try_into().unwrap()))
 }
 
 fn text_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)> {
@@ -195,33 +208,42 @@ fn text_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> 
 }
 
 fn data_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)> {
-    if tag_size < size_of::<u32>() {
+    const SIZE_U32: usize = size_of::<u32>();
+    const SIZE_U8: usize = size_of::<u8>();
+
+    if tag_size < SIZE_U32 {
         return Err(Error::from(ErrorKind::InvalidData));
     }
 
     // The data is prefaced with a u32 flag value.
-    let len_of_data = tag_size - size_of::<u32>();
+    let len_of_data = tag_size - SIZE_U32;
 
     // The resulting data will be prefaced with the length and flag value (flags included in tag_size already!)
-    let mut result = vec![0u8; tag_size + size_of::<u32>()];
+    let mut result = vec![0u8; tag_size + SIZE_U32];
 
-    result[ICCData::length].copy_from_slice(&len_of_data.to_be_bytes());
-    result[ICCData::flag].copy_from_slice(&read_u32_as_u8(reader)?);
+    result[ICCData::length].copy_from_slice(&len_of_data.to_ne_bytes());
+    result[ICCData::flag].copy_from_slice(&read_u32(reader)?.to_ne_bytes());
 
     match reader.read(&mut result[ICCData::data])? {
-        len if len == size_of::<u8>() * len_of_data => Ok((1, result.into_boxed_slice())),
+        len if len == SIZE_U8 * len_of_data => Ok((1, result.into_boxed_slice())),
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }
 }
 
 fn data_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
-    
+    let len = u32::from_ne_bytes(items[ICCData::length].try_into().unwrap());
+    write_u32(writer, u32::from_ne_bytes(items[ICCData::flag].try_into().unwrap()))?;
+
+    if items[ICCData::data].len() != len as usize {return Err(Error::from(ErrorKind::InvalidData));}
+
+    writer.write(&items[ICCData::data])?;
+
     Ok(())
 }
 
 fn save_one_chromaticity(item: &[u8], writer: &mut dyn Write) -> Result<()> {
-    write_s15f16_from_u8(writer, item[CIExyY::x].try_into().unwrap())?;
-    write_s15f16_from_u8(writer, item[CIExyY::y].try_into().unwrap())?;
+    write_s15f16(writer, f64::from_ne_bytes(item[CIExyY::x].try_into().unwrap()))?;
+    write_s15f16(writer, f64::from_ne_bytes(item[CIExyY::y].try_into().unwrap()))?;
 
     Ok(())
 }

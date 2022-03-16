@@ -1,5 +1,3 @@
-use crate::USE_BIG_ENDIAN;
-
 #[inline]
 pub fn QuickFloor(val: f64) -> i32 {
     union Temp {
@@ -10,7 +8,7 @@ pub fn QuickFloor(val: f64) -> i32 {
 
     let temp = Temp { val: val + LCMS_DOUBLE2FIXMAGIC };
     unsafe { 
-        if USE_BIG_ENDIAN {
+        if use_big_endian!() {
             temp.halves[0] >> 16
         } else {
             temp.halves[1] >> 16

@@ -13,11 +13,11 @@ pub use signature::Signature;
 use std::ops::Range;
 use std::ops::RangeFrom;
 
-pub const USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
-    true
-} else {
-    false
-};
+macro_rules! use_big_endian {
+    () => {
+        if cfg!(feature = "use_little_endian") { false } else { true }
+    };
+}
 
 pub mod as_u8;
 
