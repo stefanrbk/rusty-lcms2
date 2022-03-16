@@ -11,6 +11,7 @@ pub type U16F16 = u32;
 mod signature;
 pub use signature::Signature;
 use std::ops::Range;
+use std::ops::RangeFrom;
 
 pub const USE_BIG_ENDIAN: bool = if cfg!(BIG_ENDIAN = "true") {
     true
@@ -45,10 +46,18 @@ pub mod device_attributes {
 }
 
 /// Common structures in ICC tags
+#[repr(C)]
 pub struct ICCData {
     pub length: u32,
     pub flag: u32,
     pub data: [u8],
+}
+#[allow(non_upper_case_globals)]
+impl ICCData {
+    pub const length: Range<usize> = Range { start: 0, end: 4 };
+    pub const flag: Range<usize> = Range { start: 4, end: 8 };
+    pub const data: RangeFrom<usize> = RangeFrom { start: 8 };
+    pub const flag_and_data: RangeFrom<usize> = RangeFrom { start: 4 };
 }
 
 /// ICC date time

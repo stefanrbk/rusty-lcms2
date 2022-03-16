@@ -8,21 +8,17 @@ use std::io::*;
 use std::io::{Read, Result, Write};
 use std::mem::size_of;
 
-fn xyz_read(reader: &mut dyn Read, items: &mut [u8], _only_reads_one: usize) -> Result<usize> {
-    items.copy_from_slice(&read_xyz_as_u8(reader)?);
+fn xyz_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
+    let value = read_xyz_as_u8(reader)?;
 
-    Ok(1)
+    Ok((1, Box::new(value)))
 }
 
 fn xyz_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
     write_xyz_from_u8(writer, items.try_into().unwrap())
 }
 
-fn chromaticity_read(
-    reader: &mut dyn Read,
-    items: &mut [u8],
-    _only_reads_one: usize,
-) -> Result<usize> {
+fn chromaticity_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
     let num_channels = read_u16(reader)?;
     if num_channels != 3 {
         return Err(Error::from(ErrorKind::InvalidData));
@@ -31,19 +27,21 @@ fn chromaticity_read(
 
     _ = read_u16(reader)?;
 
-    items[CIExyYTripple::red][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::red][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::red][CIExyY::Y].copy_from_slice(&one);
+    let mut result = [0u8; 72];
 
-    items[CIExyYTripple::green][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::green][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::green][CIExyY::Y].copy_from_slice(&one);
+    result[CIExyYTripple::red][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::red][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::red][CIExyY::Y].copy_from_slice(&one);
 
-    items[CIExyYTripple::blue][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::blue][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
-    items[CIExyYTripple::blue][CIExyY::Y].copy_from_slice(&one);
+    result[CIExyYTripple::green][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::green][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::green][CIExyY::Y].copy_from_slice(&one);
 
-    Ok(1)
+    result[CIExyYTripple::blue][CIExyY::x].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::blue][CIExyY::y].copy_from_slice(&read_s15f16_as_u8(reader)?);
+    result[CIExyYTripple::blue][CIExyY::Y].copy_from_slice(&one);
+
+    Ok((1, Box::new(result)))
 }
 
 fn chromaticity_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
@@ -59,19 +57,19 @@ fn chromaticity_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: us
 
 fn colorant_order_read(
     reader: &mut dyn Read,
-    items: &mut [u8],
     _only_reads_one: usize,
-) -> Result<usize> {
+) -> Result<(usize, Box<[u8]>)> {
     let count = read_u32(reader)? as usize;
-    if count > MAX_CHANNELS as usize || items.len() < count {
+
+    // Set all values to 0xFF as that is the end of the data once writen to.
+    let mut result = vec![0xFFu8; count];
+
+    if count > MAX_CHANNELS as usize {
         return Err(Error::from(ErrorKind::InvalidData));
     }
 
-    // Set all values to 0xFF as that is the end of the data once writen to.
-    items.iter_mut().for_each(|x| *x = 0xFF);
-
-    match reader.read(&mut items[0..count])? {
-        len if len == size_of::<u8>() * count => Ok(1),
+    match reader.read(&mut result)? {
+        len if len == size_of::<u8>() * count => Ok((1, result.into_boxed_slice())),
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }
 }
@@ -102,14 +100,15 @@ fn colorant_order_write(
     }
 }
 
-fn s15_f16_read(reader: &mut dyn Read, items: &mut [u8], length_in_bytes: usize) -> Result<usize> {
+fn s15_f16_read(reader: &mut dyn Read, length_in_bytes: usize) -> Result<(usize, Box<[u8]>)> {
     let n = length_in_bytes / size_of::<u32>();
+    let mut value = vec![0u8; n];
 
     for i in 0..n {
-        items[(i * size_of::<u32>())..][..8].copy_from_slice(&read_s15f16_as_u8(reader)?);
+        value[(i * size_of::<u32>())..][..8].copy_from_slice(&read_s15f16_as_u8(reader)?);
     }
 
-    Ok(n)
+    Ok((n, value.into_boxed_slice()))
 }
 
 fn s15_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
@@ -123,15 +122,16 @@ fn s15_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
     Ok(())
 }
 
-fn u16_f16_read(reader: &mut dyn Read, items: &mut [u8], length_in_bytes: usize) -> Result<usize> {
+fn u16_f16_read(reader: &mut dyn Read, length_in_bytes: usize) -> Result<(usize, Box<[u8]>)> {
     let n = length_in_bytes / size_of::<u32>();
+    let mut result = vec![0u8; n];
 
     for i in 0..n {
         let value = (read_u32(reader)?) as f64 / 65536.0;
-        items[(i * size_of::<u32>())..][..8].copy_from_slice(&value.to_be_bytes());
+        result[(i * size_of::<u32>())..][..8].copy_from_slice(&value.to_be_bytes());
     }
 
-    Ok(n)
+    Ok((n, result.into_boxed_slice()))
 }
 
 fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()> {
@@ -151,36 +151,30 @@ fn u16_f16_write(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<(
     Ok(())
 }
 
-fn signature_read(
-    reader: &mut dyn Read,
-    items: &mut [u8],
-    _only_reads_one: usize,
-) -> Result<usize> {
-    items.copy_from_slice(&read_u32_as_u8(reader)?);
+fn signature_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box<[u8]>)> {
+    let result = read_u32_as_u8(reader)?;
 
-    Ok(1)
+    Ok((1, Box::new(result)))
 }
 
 fn signature_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
     write_u32_from_u8(writer, items.try_into().unwrap())
 }
 
-fn text_read(reader: &mut dyn Read, items: &mut [u8], tag_size: usize) -> Result<usize> {
-    if items.len() <= tag_size {
-        return Err(Error::from(ErrorKind::InvalidData));
-    }
+fn text_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)> {
+    let mut result = vec![0u8; tag_size + 1];
 
-    reader.read(&mut items[..tag_size])?;
-    items[tag_size] = 0; // zero-terminated strings
+    reader.read(&mut result[..tag_size])?;
+    result[tag_size] = 0; // zero-terminated strings
 
     // verify we are still in ASCII land
-    for i in items[..tag_size].iter() {
+    for i in result[..tag_size].iter() {
         if *i > 127 {
             return Err(Error::from(ErrorKind::InvalidData));
         }
     }
 
-    Ok(1)
+    Ok((1, result.into_boxed_slice()))
 }
 
 fn text_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
@@ -197,6 +191,31 @@ fn text_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> 
     if items[items.len() - 1] != 0 {
         writer.write(&[0u8])?;
     }
+    Ok(())
+}
+
+fn data_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)> {
+    if tag_size < size_of::<u32>() {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
+
+    // The data is prefaced with a u32 flag value.
+    let len_of_data = tag_size - size_of::<u32>();
+
+    // The resulting data will be prefaced with the length and flag value (flags included in tag_size already!)
+    let mut result = vec![0u8; tag_size + size_of::<u32>()];
+
+    result[ICCData::length].copy_from_slice(&len_of_data.to_be_bytes());
+    result[ICCData::flag].copy_from_slice(&read_u32_as_u8(reader)?);
+
+    match reader.read(&mut result[ICCData::data])? {
+        len if len == size_of::<u8>() * len_of_data => Ok((1, result.into_boxed_slice())),
+        _ => Err(Error::from(ErrorKind::UnexpectedEof)),
+    }
+}
+
+fn data_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+    
     Ok(())
 }
 

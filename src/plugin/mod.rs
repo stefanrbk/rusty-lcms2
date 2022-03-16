@@ -243,7 +243,7 @@ pub enum PluginType {
 
 /* ---------------------------------------------------- Tag Type ---------------------------------------------------- */
 
-pub type TagTypeRead = fn(&mut dyn Read, items: &mut [u8], tag_size: usize) -> Result<usize>;
+pub type TagTypeRead = fn(&mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)>;
 pub type TagTypeWrite = fn(writer: &mut dyn Write, items: &[u8], count: usize) -> Result<()>;
 
 pub struct TagTypeHandler {
