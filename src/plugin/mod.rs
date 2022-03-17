@@ -1,6 +1,5 @@
 #![macro_use]
 
-use std::convert::TryInto;
 use std::io::*;
 use std::mem::size_of;
 use std::sync::Arc;

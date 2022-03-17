@@ -20,7 +20,7 @@ fn xyz_read(reader: &mut dyn Read, _only_reads_one: usize) -> Result<(usize, Box
 }
 
 fn xyz_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
-    let value = CIEXYZ { 
+    let value = CIEXYZ {
         X: f64::from_ne_bytes(items[CIEXYZ::X].try_into().unwrap()),
         Y: f64::from_ne_bytes(items[CIEXYZ::Y].try_into().unwrap()),
         Z: f64::from_ne_bytes(items[CIEXYZ::Z].try_into().unwrap()),
@@ -232,18 +232,105 @@ fn data_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>
 
 fn data_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
     let len = u32::from_ne_bytes(items[ICCData::length].try_into().unwrap());
-    write_u32(writer, u32::from_ne_bytes(items[ICCData::flag].try_into().unwrap()))?;
+    write_u32(
+        writer,
+        u32::from_ne_bytes(items[ICCData::flag].try_into().unwrap()),
+    )?;
 
-    if items[ICCData::data].len() != len as usize {return Err(Error::from(ErrorKind::InvalidData));}
+    if items[ICCData::data].len() != len as usize {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
 
     writer.write(&items[ICCData::data])?;
 
     Ok(())
 }
 
+fn text_description_read(reader: &mut dyn Read, tag_size: usize) -> Result<(usize, Box<[u8]>)> {
+    const SIZE_U8: usize = size_of::<u8>();
+    const SIZE_U16: usize = size_of::<u16>();
+    const SIZE_U32: usize = size_of::<u32>();
+
+    let mut tag_size = tag_size;
+
+    if tag_size < SIZE_U32 {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
+
+    // Read the length of ASCII data
+    let ascii_count = read_u32(reader)? as usize;
+
+    if tag_size < ascii_count {
+        return Err(Error::from(ErrorKind::InvalidData));
+    }
+
+    let mut text = vec![0u8; tag_size + 1];
+    reader.read_exact(&mut text.as_mut_slice())?;
+    tag_size -= ascii_count;
+
+    // Make sure there is a terminator
+    text[ascii_count] = 0;
+
+    let result = Ok((1, text.into_boxed_slice()));
+
+    if tag_size < 2 * SIZE_U32 {
+        return result;
+    }
+
+    /* Code for when we actually use the Unicode */
+
+    // let unicode_code = if let Ok(code) = read_u32(reader) {
+    //     code
+    // } else {
+    //     return result;
+    // };
+
+    if let Err(_) = read_u32(reader) { return result; }
+
+    let unicode_count = if let Ok(count) = read_u32(reader) {
+        count as usize
+    } else {
+        return result;
+    };
+
+    tag_size -= 2 * SIZE_U32;
+
+    if tag_size < unicode_count * SIZE_U16 {
+        return result;
+    }
+
+    let mut dummy = vec![0u8; unicode_count * SIZE_U16];
+    if let Err(_) = reader.read(&mut dummy.as_mut_slice()) { return result; }
+    tag_size -= unicode_count * SIZE_U16;
+
+    // Skip ScriptCode
+
+    if tag_size >= SIZE_U16 + SIZE_U8 + 67 {
+        if let Err(_) = read_u16(reader) { return result; }
+        if let Err(_) = read_u8(reader) { return result; }
+
+        let mut dummy = [0u8; 67];
+        if let Err(_) = reader.read(&mut dummy) { return result; }
+    }
+
+    result
+}
+
+// fn text_description_write(writer: &mut dyn Write, items: &[u8], _only_writes_one: usize) -> Result<()> {
+//     let filler = [0u8; 68];
+
+//     Ok(())
+// }
+
 fn save_one_chromaticity(item: &[u8], writer: &mut dyn Write) -> Result<()> {
-    write_s15f16(writer, f64::from_ne_bytes(item[CIExyY::x].try_into().unwrap()))?;
-    write_s15f16(writer, f64::from_ne_bytes(item[CIExyY::y].try_into().unwrap()))?;
+    write_s15f16(
+        writer,
+        f64::from_ne_bytes(item[CIExyY::x].try_into().unwrap()),
+    )?;
+    write_s15f16(
+        writer,
+        f64::from_ne_bytes(item[CIExyY::y].try_into().unwrap()),
+    )?;
 
     Ok(())
 }
@@ -278,6 +365,7 @@ pub static SUPPORTED_TAG_TYPES: &[TagTypeHandler] = &[
     type_handler!(s::tag_type::U16_FIXED16_ARRAY, U16F16),
     type_handler!(s::tag_type::TEXT, Text),
     type_handler!(s::tag_type::SIGNATURE, Signature),
+    type_handler!(s::tag_type::DATA, Data),
     type_handler!(s::tag_type::XYZ, Xyz),
     type_handler!(CORBIS_BROKEN_XYZ_TYPE, Xyz),
 ];
