@@ -15,11 +15,17 @@ use std::ops::RangeFrom;
 
 macro_rules! use_big_endian {
     () => {
-        if cfg!(feature = "use_little_endian") { false } else { true }
+        if cfg!(feature = "use_little_endian") {
+            false
+        } else {
+            true
+        }
     };
 }
 
 pub mod as_u8;
+
+pub const MAX_PATH: usize = 256;
 
 /// D50 XYZ normalized to Y=1.0
 pub mod d50 {
@@ -157,7 +163,7 @@ pub struct TagEntry {
     pub size: u32,
 }
 
-pub const MAX_CHANNELS: u32 = 16;
+pub const MAX_CHANNELS: usize = 16;
 
 mod pixel_type;
 pub use pixel_type::PixelType;

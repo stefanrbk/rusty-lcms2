@@ -3,6 +3,7 @@ use crate::Signature;
 pub mod types;
 pub mod tags;
 pub mod mlu;
+pub mod named_color_list;
 
 pub const MAX_ENCODABLE_XYZ: f64 = 1.0 + 32767.0 / 32768.0;
 pub const MIN_ENCODABLE_AB2: f64 = -128.0;

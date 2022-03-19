@@ -101,11 +101,11 @@ fn colorant_order_write(
         count = MAX_CHANNELS;
     }
 
-    let items = &items[0..count as usize];
+    let items = &items[0..count];
 
-    write_u32(writer, count)?;
+    write_u32(writer, count as u32)?;
     match writer.write(items)? {
-        len if len == size_of::<u8>() * count as usize => Ok(()),
+        len if len == size_of::<u8>() * count => Ok(()),
         _ => Err(Error::from(ErrorKind::UnexpectedEof)),
     }
 }
